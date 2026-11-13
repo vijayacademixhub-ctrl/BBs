@@ -5,7 +5,9 @@ teams: meeting management, local microphone recording, automatic
 transcription, human-verified AI extraction of decisions and action items,
 task and daily-work tracking, and calendar integration.
 
-**Current status: ready for a first controlled deployment, pending approval.**
+**Current status: ready for a controlled evaluation deployment, pending
+approval.** Not ready for institutional records — see
+[docs/m3-deployment-readiness.md](docs/m3-deployment-readiness.md).
 The database schema, authentication, mandatory multi-factor authentication,
 Row Level Security, private storage and audit logging are built and tested
 against local PostgreSQL — 196 database tests. No Supabase project has been
@@ -78,7 +80,8 @@ Run all of these from the repository root.
 | `npm test` | Unit tests (Vitest) |
 | `npm run typecheck` | TypeScript check, no emit |
 | `npm run verify:m1` | Browser verification of the Milestone 1 acceptance criteria |
-| `npm run test:db` | Database security suite — 196 tests against PostgreSQL |
+| `npm run test:db` | Database security suite — 216 tests against PostgreSQL |
+| `npm run db:evaluate` | Local evaluation environment: two synthetic teams, access matrix |
 | `npm run verify:deployment` | Live verification against a real Supabase project |
 | `npm run test:all` | Frontend and database suites together |
 | `npm run db:reset` | Rebuild a local database from the migration files |
@@ -137,6 +140,10 @@ implemented. Nothing in the interface simulates a successful AI result.
 | [docs/m3-migration-runbook.md](docs/m3-migration-runbook.md) | All 17 migrations: purpose, dependencies, validation query, rollback |
 | [docs/administrator-provisioning.md](docs/administrator-provisioning.md) | Creating the two Super Admin accounts securely |
 | [docs/m3-live-verification.md](docs/m3-live-verification.md) | What must pass before confidential data is entered |
+| [docs/m3-evaluation-plan.md](docs/m3-evaluation-plan.md) | How to evaluate the system, in three phases |
+| [docs/m3-deployment-readiness.md](docs/m3-deployment-readiness.md) | Readiness assessment, defects found, outstanding risks |
+| [docs/sample-data-test-plan.md](docs/sample-data-test-plan.md) | The synthetic dataset and what loading it found |
+| [docs/account-ownership-transfer.md](docs/account-ownership-transfer.md) | Personal ownership risks and the transfer procedure |
 | [docs/supabase-setup.md](docs/supabase-setup.md) | Project creation, region, keys, auth settings, deployment checks |
 | [docs/retention-and-consent.md](docs/retention-and-consent.md) | Both policies are unapproved; what exists and what you need to decide |
 | [docs/migration-and-backup.md](docs/migration-and-backup.md) | Local setup, migration procedure, rollback, backup and recovery |

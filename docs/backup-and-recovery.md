@@ -51,6 +51,23 @@ derived data.
 
 ---
 
+### 2.1 What the Free Plan Means Here
+
+The evaluation runs on the Free plan, which has consequences worth stating
+rather than leaving to be discovered:
+
+- **There is no automated backup.** The scheduled dump in §3.1 is not a
+  belt-and-braces addition to Supabase's backups. It is the only backup.
+- **Projects pause after about a week of inactivity.** An evaluation that
+  goes quiet over an examination period will come back paused.
+- **Storage is capped at 1 GB**, roughly 65 hours of audio — not a constraint
+  during evaluation, since no audio is being recorded.
+
+While the project holds only synthetic data this is all tolerable: the worst
+case is rebuilding from `npm run db:evaluate`, which takes seconds. It stops
+being tolerable the moment real records are entered, and the plan decision
+should be revisited at the same time as the ownership transfer.
+
 ## 3. Recommended Arrangement
 
 The Windows AI host already exists, already holds the service-role key, and
@@ -127,13 +144,24 @@ Every responsibility has a **primary** and a **secondary**. A single named
 owner is the same failure mode as a single Super Admin: it works until that
 person is on leave, ill, or has left.
 
+**Confirmed assignment: Academic Office is primary, IT is secondary.**
+
 | Responsibility | Primary | Secondary | Cadence |
 |---|---|---|---|
-| Backups are running and succeeding | _________ | _________ | Weekly |
-| Encryption key held in two places | _________ | _________ | At setup, then quarterly |
-| Off-site copy is current | _________ | _________ | Monthly |
-| A restore is performed and verified | _________ | _________ | Quarterly, and after any schema change |
+| Backups are running and succeeding | Academic Office | IT | Weekly |
+| Encryption key held in two places | Academic Office | IT | At setup, then quarterly |
+| Off-site copy is current | Academic Office | IT | Monthly |
+| A restore is performed and verified | Academic Office | IT | Quarterly, and after any schema change |
 | Approving deletion and retention | Institution | — | As required |
+
+A note on this split. The Academic Office owns the records and so owns
+whether they survive; IT holds the technical capability. That is the right
+way round, but it only works if the Academic Office can actually run the
+commands in §3 or has a standing arrangement with IT to run them. "Primary
+owner" cannot mean "the person who is blamed if IT did not do it".
+
+Before deployment, one named individual in each should be written in beside
+these roles. A team name cannot notice that a backup stopped running.
 
 The secondary must be able to perform the task, not merely know it exists.
 That means they have the credentials, know where the off-site copy lives, and

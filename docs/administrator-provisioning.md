@@ -1,7 +1,19 @@
 # Administrator Provisioning
 
-How the first two Super Admin accounts are created. Nothing here has been
-done; no account exists.
+How the two Super Admin accounts are created. Nothing here has been done; no
+account exists.
+
+**Decision recorded:** two separate authorised individuals, individual
+accounts, mandatory TOTP, independent Supabase dashboard access.
+
+**During evaluation**, both are test accounts held by the people conducting
+the evaluation — not office staff, who are not invited until the consent
+policy is approved and ownership has transferred. The procedure is identical
+either way; only who sits behind the accounts changes.
+
+Placeholder identities used throughout: **Administrator A** and
+**Administrator B**. Substitute real people at provisioning time and write
+nothing about them into this repository.
 
 **Two accounts, not one.** With mandatory MFA and no backup codes, a single
 Super Admin who loses their authenticator cannot be recovered from inside the
@@ -59,7 +71,7 @@ permanently the moment one exists — you get exactly one.
 
 Dashboard → Authentication → Users → **Add user**.
 
-- Email: the first administrator's institutional address
+- Email: Administrator A's address
 - **Auto Confirm User: ON** — they cannot receive a confirmation email before
   their profile exists
 - Password: let them set it themselves via a recovery link, or generate one
@@ -81,9 +93,9 @@ values ('Academic Office', 'academic-office');
 insert into public.profiles (id, email, full_name, designation, status)
 values (
   '<user-uuid-from-step-3.1>',
-  'first.admin@your-institution.ac.in',
-  'First Administrator',
-  'Research Lead',
+  '<administrator-a-email>',
+  '<Administrator A name>',
+  'Office Head',
   'active'
 );
 
@@ -139,11 +151,11 @@ As the first Super Admin, signed in and MFA-verified:
 ```sql
 insert into public.user_invitations (email, team_id, role, full_name, designation, invited_by)
 select
-  'second.admin@your-institution.ac.in',
+  '<administrator-b-email>',
   t.id,
   'super_admin',
-  'Second Administrator',
-  'Coordinator',
+  '<Administrator B name>',
+  'Deputy Head',
   '<first-admin-uuid>'
 from public.teams t where t.slug = 'academic-office';
 ```
@@ -164,7 +176,7 @@ Then the profile and membership, as in §3.2 — `status = 'active'`, role
 ```sql
 update public.user_invitations
 set status = 'accepted', accepted_at = now(), accepted_by = '<new-user-uuid>'
-where email = 'second.admin@your-institution.ac.in' and status = 'pending';
+where email = '<administrator-b-email>' and status = 'pending';
 ```
 
 ### 4.4 Enrolment
@@ -270,11 +282,39 @@ will refuse to remove the last one.
 
 ---
 
+## 6a. No Self-Approval — How It Is Enforced
+
+Worth being precise, because "no self-approval" is easy to write and easy to
+leave as a convention.
+
+Three independent controls:
+
+1. **A check constraint.** `mfa_reset_not_self_approved` refuses any row
+   where `approved_by = profile_id`. This holds against every writer
+   including the service role, because a constraint is not a policy.
+2. **An approval must carry provenance.** `mfa_reset_approval_recorded`
+   refuses a status of `approved` or `completed` without both an approver and
+   a timestamp. A status field someone changed is not an approval.
+3. **Team scoping.** Only a Super Admin of a team the subject belongs to can
+   read or write the request at all (migration 0017). An administrator from
+   an unrelated team cannot manufacture an authorisation.
+
+The evaluation dataset contains a worked example: Administrator A raises the
+request, **Administrator B** approves it. That ordering is the point of
+having two.
+
+Tests covering all three are in `supabase/tests/mfa.test.ts`.
+
 ## 7. What Is Audited Automatically
 
 Every change to a profile, team membership, invitation, meeting, recording,
 transcript, consent record, retention policy, application setting, calendar
 connection, document and MFA reset request.
+
+Each entry is scoped to the team it concerns (migration 0018), so an
+administrator of one team cannot read another team's trail. Before that fix
+most entries carried no team and were readable by any Super Admin — found by
+running the evaluation dataset, which is the reason that dataset exists.
 
 Each entry records who, what, before, after and when. Token-shaped fields are
 redacted before writing. The trail is append-only: no `UPDATE` or `DELETE`

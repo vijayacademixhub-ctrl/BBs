@@ -15,7 +15,8 @@
     "test:db": "vitest run --config vitest.db.config.mts",
     "test:all": "npm run test && npm run test:db",
     "db:reset": "node scripts/db-reset.mjs",
-    "verify:deployment": "node scripts/verify-deployment.mjs"
+    "verify:deployment": "node scripts/verify-deployment.mjs",
+    "db:evaluate": "node scripts/db-evaluate.mjs"
   },
   "engines": {
     "node": ">=20"
