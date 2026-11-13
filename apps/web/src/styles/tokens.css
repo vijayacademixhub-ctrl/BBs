@@ -1,0 +1,104 @@
+/*
+ * AcademicOS design tokens.
+ *
+ * This file is the single source of visual truth. Replace these values to
+ * adopt a reference design; no component file references a literal colour.
+ * Values are raw HSL channels so Tailwind can compose them with opacity.
+ */
+
+:root {
+  --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', monospace;
+  --radius: 0.5rem;
+
+  /* Surfaces — warm neutral, chosen to read as a document rather than a console */
+  --background: 40 20% 99%;
+  --foreground: 225 25% 13%;
+  --card: 0 0% 100%;
+  --card-foreground: 225 25% 13%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 225 25% 13%;
+  --muted: 40 14% 95%;
+  --muted-foreground: 225 10% 42%;
+  --secondary: 40 14% 94%;
+  --secondary-foreground: 225 25% 20%;
+  --accent: 243 44% 96%;
+  --accent-foreground: 243 55% 34%;
+
+  /* Brand — deep indigo, scholarly rather than product-blue */
+  --primary: 243 52% 44%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Semantic */
+  --destructive: 0 70% 46%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 152 52% 31%;
+  --success-foreground: 0 0% 100%;
+  --warning: 32 88% 42%;
+  --warning-foreground: 0 0% 100%;
+  --info: 205 76% 38%;
+  --info-foreground: 0 0% 100%;
+
+  /* Provenance — these two carry meaning, not decoration */
+  --ai: 272 56% 47%;
+  --ai-foreground: 0 0% 100%;
+  --ai-muted: 272 60% 96%;
+  --sample: 32 84% 44%;
+  --sample-foreground: 0 0% 100%;
+  --sample-muted: 38 92% 95%;
+
+  --border: 40 10% 88%;
+  --input: 40 10% 85%;
+  --ring: 243 52% 44%;
+
+  /* Sidebar — deliberately darker than the content region */
+  --sidebar: 228 30% 15%;
+  --sidebar-foreground: 220 16% 88%;
+  --sidebar-muted: 220 10% 62%;
+  --sidebar-accent: 243 50% 60%;
+  --sidebar-border: 228 24% 24%;
+}
+
+.dark {
+  --background: 228 24% 10%;
+  --foreground: 220 16% 92%;
+  --card: 228 22% 13%;
+  --card-foreground: 220 16% 92%;
+  --popover: 228 22% 13%;
+  --popover-foreground: 220 16% 92%;
+  --muted: 228 18% 18%;
+  --muted-foreground: 220 12% 64%;
+  --secondary: 228 18% 18%;
+  --secondary-foreground: 220 16% 90%;
+  --accent: 243 32% 22%;
+  --accent-foreground: 243 60% 82%;
+
+  --primary: 243 62% 66%;
+  --primary-foreground: 228 30% 12%;
+
+  --destructive: 0 62% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 152 44% 46%;
+  --success-foreground: 228 30% 10%;
+  --warning: 32 80% 56%;
+  --warning-foreground: 228 30% 10%;
+  --info: 205 66% 58%;
+  --info-foreground: 228 30% 10%;
+
+  --ai: 272 62% 70%;
+  --ai-foreground: 228 30% 12%;
+  --ai-muted: 272 30% 22%;
+  --sample: 32 80% 58%;
+  --sample-foreground: 228 30% 12%;
+  --sample-muted: 32 30% 22%;
+
+  --border: 228 16% 24%;
+  --input: 228 16% 26%;
+  --ring: 243 62% 66%;
+
+  --sidebar: 228 28% 12%;
+  --sidebar-foreground: 220 16% 86%;
+  --sidebar-muted: 220 10% 58%;
+  --sidebar-accent: 243 58% 68%;
+  --sidebar-border: 228 20% 20%;
+}

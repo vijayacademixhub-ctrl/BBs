@@ -1,0 +1,14 @@
+{
+  "name": "AcademicOS",
+  "short_name": "AcademicOS",
+  "description": "Academic operations management for research and coursework teams.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fdfcfa",
+  "theme_color": "#2b2e5c",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

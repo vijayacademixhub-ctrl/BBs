@@ -490,16 +490,16 @@ an approved action item, and assign a task through to completion.
 
 | # | Question | Blocks |
 |---|---|---|
-| Q1 | Where are the reverse-engineering materials? | The entire visual design; Milestone 1 |
+| Q1 | ~~Where are the reverse-engineering materials?~~ | **Resolved** — none available; a new design was built with a token-driven theme |
 | Q2 | Does a Supabase project already exist, and in which region? | Milestone 2 |
-| Q3 | What is the recording retention period, and who owns recordings institutionally? | Storage design, Milestone 3 |
-| Q4 | Will meetings be in English only, or English mixed with Kannada or Hindi? | Whisper model size and accuracy expectations |
+| Q3 | ~~Recording retention period?~~ | **Resolved** — 90 days after transcript approval, subject to institutional approval; approved transcripts retained until authorised deletion |
+| Q4 | ~~Meeting languages?~~ | **Resolved** — English, Kannada and Hindi including mixed speech; model kept configurable for benchmarking |
 | Q5 | Is the Windows host always on, and does it have an NVIDIA GPU? | Realistic turnaround time per meeting |
 | Q6 | Is there a Google Workspace domain for calendar integration? | Whether OAuth needs Google verification |
-| Q7 | Must all participants consent to recording under institutional policy? | Consent flow design — legal, not technical |
+| Q7 | Must all participants consent, or only the organiser? | **Partly resolved** — consent confirmation and a visible recording indicator are required; the scope of consent is still to be confirmed |
 
-Q1 and Q7 are the two that should be answered before implementation begins.
-Q7 in particular is a policy matter rather than an engineering one: a system
-that records academic meetings creates an institutional record, and the
-consent and retention rules should be settled before the first recording is
-made, not retrofitted afterwards.
+Q1, Q3 and Q4 were resolved at the Milestone 1 approval. Q7 remains open in
+part: the requirement for consent and a visible recording indicator is
+settled, but whether consent must be obtained from every participant or only
+recorded by the organiser is a policy matter and should be confirmed before
+Milestone 3 ships.

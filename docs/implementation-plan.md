@@ -31,8 +31,9 @@ blocked on source materials.
 
 ---
 
-### M1 — Application Foundation
-*Estimated 1 week. Corresponds to the brief's First Development Milestone.*
+### M1 — Application Foundation  ✅ Complete (2026-11-13)
+*Corresponds to the brief's First Development Milestone. See
+[milestone-1-report.md](milestone-1-report.md) for the completion report.*
 
 Project scaffolding; responsive application shell with sidebar, header and
 user area; routing for every page in the hierarchy; the full set of
@@ -43,9 +44,9 @@ All sample data is visibly labelled as such. No AI processing is simulated
 as successful — screens that depend on AI show a clearly marked
 not-yet-configured state.
 
-**Depends on:** reverse-engineering materials for the visual design (Q1).
-Without them, M1 can be built structurally and re-themed later, but the
-re-theming cost is real and is the reason Q1 should be answered first.
+**Outcome:** built without reference materials, as agreed. The design system
+is token-driven so that a reference design can be adopted later by replacing
+`apps/web/src/styles/tokens.css` alone.
 
 **Acceptance:** the project runs locally; navigation works on desktop,
 tablet and mobile widths; meeting, task and daily-work creation and editing
