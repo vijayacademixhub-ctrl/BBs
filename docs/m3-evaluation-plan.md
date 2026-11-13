@@ -18,6 +18,7 @@ invited.
 | Backups | Primary: Academic Office. Secondary: IT | `docs/backup-and-recovery.md` §4 |
 | Recording consent | Individual participant consent | Recording stays **off** until the policy is formally approved |
 | Retention | Pending institutional approval | Nothing is deleted; no scheduler exists |
+| Region (evaluation only) | Any region acceptable — synthetic data | **Does not carry into production.** Region is fixed at creation, so a production project in India means creating it there from the start |
 
 ### 1.1 What "Individual Participant Consent" Means Here
 
@@ -187,7 +188,8 @@ Phase 1 needs no approval and creates nothing. **This is where you are.**
 
 - [ ] Personal Supabase account with MFA and stored recovery codes
 - [ ] Transfer date agreed in writing
-- [ ] Project created (`docs/m3-deployment-guide.md`)
+- [ ] Project created (`docs/m3-deployment-guide.md`). Prefer `ap-south-1`;
+      any region accepted for synthetic data
 - [ ] 18 migrations applied (`docs/m3-migration-runbook.md`)
 - [ ] Two test Super Admins provisioned
 - [ ] `npm run verify:deployment` passes
@@ -200,6 +202,8 @@ enrolment, signed-URL expiry, email delivery.
 ### Phase 3 — Production. Needs several further decisions.
 
 - [ ] Ownership transferred to the institution
+- [ ] **Region confirmed.** If the evaluation project is not in an Indian
+      region, production needs a new project rather than a transfer
 - [ ] Plan reconsidered now that backups matter
 - [ ] Consent policy formally approved; eligibility rule switched
 - [ ] Retention approved or explicitly deferred in writing

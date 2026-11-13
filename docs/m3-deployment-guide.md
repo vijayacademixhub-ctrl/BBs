@@ -47,15 +47,22 @@ instance size you choose — capacity varies.
 **The region dropdown in the creation dialog is authoritative.** It lists only
 what you can actually choose.
 
-> **If Mumbai is not offered: stop. Do not select anything else.**
+> **For the EVALUATION project only, the owner has decided that any region
+> is acceptable**, on the basis that it will hold synthetic data and no
+> institutional record. Prefer `ap-south-1`, then `ap-south-2` (Hyderabad),
+> then whatever is offered.
 >
-> The default is normally a US region, which would place confidential
-> institutional records outside India. That is a data-residency decision for
-> the institution, not a deployment convenience.
+> **This decision does not carry into production.** The region cannot be
+> changed after creation, so a production project must be created in the
+> intended region from the start — which in practice means the ownership
+> transfer in `docs/account-ownership-transfer.md` §4 is a *new project in
+> the right region*, not a transfer of the evaluation one, unless the
+> evaluation project happened to land in an Indian region.
 >
-> Tell me, and we will decide together. The nearest alternatives are
-> `ap-south-2` (Hyderabad, where offered) and `ap-southeast-1` (Singapore).
-> Hyderabad keeps data in India; Singapore does not.
+> That is worth deciding deliberately rather than discovering later: if the
+> evaluation project is created outside India and then quietly becomes
+> production, the residency decision will have been made by whatever capacity
+> Supabase had that day.
 
 Choose the **specific** region `ap-south-1`, not the "Asia Pacific" general
 grouping — the grouping lets Supabase place the project anywhere in the area
