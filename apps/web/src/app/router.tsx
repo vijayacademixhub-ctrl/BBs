@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from 'react'
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter, createMemoryRouter, Navigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/app-shell'
 import { LoginPage } from '@/features/auth/login-page'
 import { MfaPage } from '@/features/auth/mfa-page'
@@ -27,7 +27,23 @@ function Lazy({ children }: { children: ReactNode }) {
   return <Suspense fallback={<LoadingRows rows={5} />}>{children}</Suspense>
 }
 
-export const router = createBrowserRouter([
+/**
+ * The router factory.
+ *
+ * Normal builds use the browser history, so URLs are real and shareable.
+ *
+ * A standalone build (VITE_ROUTER=memory) keeps routing entirely in memory.
+ * That is for hosts which serve the files statically with no single-page
+ * fallback, where a request for /dashboard would be a 404. Navigation inside
+ * the application works identically; only deep links and the address bar are
+ * given up, which is the right trade when the alternative is a broken route.
+ */
+const createRouter =
+  (import.meta.env.VITE_ROUTER as string | undefined) === 'memory'
+    ? createMemoryRouter
+    : createBrowserRouter
+
+export const router = createRouter([
   { path: '/login', element: <LoginPage /> },
   // Outside the shell: a session at aal1 can reach no application data, so
   // rendering the navigation around this page would be misleading.
