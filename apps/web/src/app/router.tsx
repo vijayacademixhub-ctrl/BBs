@@ -1,6 +1,8 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/app-shell'
+import { LoginPage } from '@/features/auth/login-page'
+import { RequireAuth, RequireRole } from '@/features/auth/route-guards'
 import { LoadingRows } from '@/components/common/states'
 import { DashboardPage } from '@/features/dashboard/dashboard-page'
 
@@ -25,9 +27,14 @@ function Lazy({ children }: { children: ReactNode }) {
 }
 
 export const router = createBrowserRouter([
+  { path: '/login', element: <LoginPage /> },
   {
     path: '/',
-    element: <AppShell />,
+    element: (
+      <RequireAuth>
+        <AppShell />
+      </RequireAuth>
+    ),
     children: [
       { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: 'dashboard', element: <DashboardPage /> },
@@ -98,6 +105,7 @@ export const router = createBrowserRouter([
       {
         path: 'verification',
         element: (
+          <RequireRole roles={['super_admin', 'coordinator']}>
           <Lazy>
             <PlannedPage
               title="Verification Centre"
@@ -111,6 +119,7 @@ export const router = createBrowserRouter([
               ]}
             />
           </Lazy>
+          </RequireRole>
         ),
       },
       {
@@ -134,6 +143,7 @@ export const router = createBrowserRouter([
       {
         path: 'admin/users',
         element: (
+          <RequireRole roles={['super_admin']}>
           <Lazy>
             <PlannedPage
               title="Team Management"
@@ -146,6 +156,7 @@ export const router = createBrowserRouter([
               ]}
             />
           </Lazy>
+          </RequireRole>
         ),
       },
       {
@@ -166,7 +177,14 @@ export const router = createBrowserRouter([
           </Lazy>
         ),
       },
-      { path: 'admin/system', element: <Lazy><SystemStatusPage /></Lazy> },
+      {
+        path: 'admin/system',
+        element: (
+          <RequireRole roles={['super_admin']}>
+            <Lazy><SystemStatusPage /></Lazy>
+          </RequireRole>
+        ),
+      },
 
       { path: 'notifications', element: <Lazy><NotificationsPage /></Lazy> },
       { path: 'settings', element: <Lazy><SettingsPage /></Lazy> },

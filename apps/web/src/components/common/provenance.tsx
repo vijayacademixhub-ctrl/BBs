@@ -1,6 +1,7 @@
 import { FlaskConical, Sparkles, ShieldCheck } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { dataSource } from '@/lib/api'
 
 /**
  * Provenance marking.
@@ -37,10 +38,14 @@ export function ProvenanceBadge({ provenance, className }: { provenance: Provena
 }
 
 /**
- * Page-level notice. Shown on every screen while the application is running
- * on demonstration data so that the state is never ambiguous.
+ * Page-level notice.
+ *
+ * Shown on every screen while the application is running on demonstration
+ * data, and on none once it is connected to a database. Pages do not decide
+ * this for themselves, so the two cases cannot drift apart.
  */
 export function SampleDataNotice({ className }: { className?: string }) {
+  if (dataSource !== 'sample') return null
   return (
     <div
       role="note"

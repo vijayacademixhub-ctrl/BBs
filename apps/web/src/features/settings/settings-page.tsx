@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { PageHeader } from '@/components/common/page-header'
 import { LoadingRows } from '@/components/common/states'
-import { useCurrentUser } from '@/hooks/use-data'
+import { useAuth } from '@/features/auth/auth-context'
 import { useTheme } from '@/hooks/use-theme'
 import { initialsOf } from '@/lib/format'
 
@@ -17,7 +17,8 @@ const ROLE_LABEL = {
 } as const
 
 export function SettingsPage() {
-  const { data: user, isPending } = useCurrentUser()
+  const { profile: user, status } = useAuth()
+  const isPending = status === 'loading'
   const { theme, toggle } = useTheme()
 
   return (

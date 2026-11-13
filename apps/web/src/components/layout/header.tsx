@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Bell, LogOut, Menu, Moon, Settings, Sun, UserRound } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -6,7 +6,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useCurrentUser, useNotifications } from '@/hooks/use-data'
+import { useNotifications } from '@/hooks/use-data'
+import { useAuth } from '@/features/auth/auth-context'
 import { initialsOf } from '@/lib/format'
 import { useTheme } from '@/hooks/use-theme'
 
@@ -17,9 +18,10 @@ const ROLE_LABEL = {
 } as const
 
 export function Header({ onOpenNav }: { onOpenNav: () => void }) {
-  const { data: user } = useCurrentUser()
+  const { profile: user, mode, signOut } = useAuth()
   const { data: notifications } = useNotifications()
   const { theme, toggle } = useTheme()
+  const navigate = useNavigate()
   const unread = (notifications ?? []).filter((n) => !n.read).length
 
   return (
@@ -73,8 +75,14 @@ export function Header({ onOpenNav }: { onOpenNav: () => void }) {
             <Link to="/settings"><Settings /> Settings</Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled>
-            <LogOut /> Sign out — available at M2
+          <DropdownMenuItem
+            disabled={mode === 'sample'}
+            onSelect={() => {
+              void signOut().then(() => navigate('/login'))
+            }}
+          >
+            <LogOut />{' '}
+            {mode === 'sample' ? 'Sign out — no backend configured' : 'Sign out'}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

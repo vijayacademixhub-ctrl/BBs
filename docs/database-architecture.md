@@ -1,7 +1,17 @@
 # AcademicOS — Database Architecture
 
-**Version:** 0.1 (proposal, pending approval)
+**Version:** 0.2 — implemented at Milestone 2
 **Platform:** PostgreSQL 15 via Supabase
+
+> **The migrations are the source of truth.** This document describes the
+> design; `supabase/migrations/` is what actually runs, and it has been
+> applied and tested against PostgreSQL. Where the two differ, the migrations
+> are correct and this document is stale.
+>
+> Implemented in addition to the tables listed below: `user_invitations`,
+> `meeting_consents`, `calendar_credentials`, `app_settings` and
+> `retention_policies`. Access rules are set out in
+> [security-model.md](security-model.md).
 
 ---
 

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as api from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
 import type { Profile } from '@/types/domain'
-import { CURRENT_USER_ID } from '@/lib/sample/seed'
+import { useAuth } from '@/features/auth/auth-context'
 
 export function useProfiles() {
   return useQuery({ queryKey: queryKeys.profiles, queryFn: api.listProfiles })
@@ -14,9 +14,21 @@ export function useProfileMap(): Record<string, Profile> {
   return Object.fromEntries((data ?? []).map((p) => [p.id, p]))
 }
 
+/**
+ * The signed-in user.
+ *
+ * Comes from the authentication provider, not from the data layer: in
+ * Supabase mode this is the JWT subject, which is the same identity the
+ * database applies its policies to. Reading it from a list of profiles would
+ * invite the two to disagree.
+ */
 export function useCurrentUser() {
-  const { data, ...rest } = useProfiles()
-  return { ...rest, data: data?.find((p) => p.id === CURRENT_USER_ID) }
+  const { profile, status } = useAuth()
+  return {
+    data: profile ?? undefined,
+    isPending: status === 'loading',
+    isError: status === 'error',
+  }
 }
 
 export function useMeetings() {

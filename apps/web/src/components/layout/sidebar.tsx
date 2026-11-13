@@ -3,7 +3,7 @@ import { GraduationCap, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useCurrentUser } from '@/hooks/use-data'
+import { useAuth } from '@/features/auth/auth-context'
 import { SECONDARY_NAV, visibleGroups, type NavItem } from './nav-config'
 
 function NavRow({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
@@ -36,8 +36,8 @@ function NavRow({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }
 }
 
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
-  const { data: user } = useCurrentUser()
-  const groups = visibleGroups(user?.role)
+  const { role, mode } = useAuth()
+  const groups = visibleGroups(role ?? undefined)
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -66,9 +66,11 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         {SECONDARY_NAV.map((item) => (
           <NavRow key={item.to} item={item} onNavigate={onNavigate} />
         ))}
-        <div className="px-2.5 pt-2">
-          <Badge variant="sample" className="w-full justify-center">Sample data · M1</Badge>
-        </div>
+        {mode === 'sample' ? (
+          <div className="px-2.5 pt-2">
+            <Badge variant="sample" className="w-full justify-center">Demonstration data</Badge>
+          </div>
+        ) : null}
       </div>
     </div>
   )

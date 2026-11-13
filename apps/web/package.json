@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify:m1": "node e2e/verify-m1.cjs"
+    "verify:m1": "node e2e/verify-m1.cjs",
+    "verify:m2": "node e2e/verify-m2.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.6",
@@ -26,6 +27,7 @@
     "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-tabs": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.6",
+    "@supabase/supabase-js": "^2.119.0",
     "@tanstack/react-query": "^5.62.11",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

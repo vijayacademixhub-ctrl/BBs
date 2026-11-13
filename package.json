@@ -11,12 +11,17 @@
     "preview": "npm run preview --workspace apps/web",
     "test": "npm run test --workspace apps/web",
     "typecheck": "npm run typecheck --workspace apps/web",
-    "verify:m1": "npm run verify:m1 --workspace apps/web"
+    "verify:m1": "npm run verify:m1 --workspace apps/web",
+    "test:db": "vitest run --config vitest.db.config.mts",
+    "test:all": "npm run test && npm run test:db",
+    "db:reset": "node scripts/db-reset.mjs"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
+    "@types/pg": "^8.11.10",
+    "pg": "^8.13.1",
     "vitest": "^5.1.0"
   }
 }

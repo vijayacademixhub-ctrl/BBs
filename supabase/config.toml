@@ -1,0 +1,85 @@
+# AcademicOS — Supabase local configuration.
+#
+# This file is read by the Supabase CLI. It is also the authoritative record
+# of the settings that must be applied to the hosted project, because several
+# of them are security controls rather than conveniences.
+#
+# project_id is the local stack identifier only. It is NOT the hosted
+# project reference and contains no secret.
+project_id = "academicos"
+
+[api]
+enabled = true
+port = 54321
+# Only the application schema is exposed through PostgREST. The storage and
+# auth schemas are reached through their own APIs, never through REST.
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+# Caps the rows any single request can return, which limits the damage a
+# mistaken or hostile query can do.
+max_rows = 500
+
+[db]
+port = 54322
+shadow_port = 54320
+# Match the hosted project's major version. Confirm this against the created
+# project before the first migration is applied (docs/supabase-setup.md §3).
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[storage]
+enabled = true
+# 512 MB ceiling. A one-hour Opus recording is roughly 15 MB, so this is
+# generous; it exists to bound abuse, not to accommodate normal use.
+file_size_limit = "512MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+
+# ---------------------------------------------------------------------------
+# SECURITY CONTROL — public registration is disabled.
+#
+# AcademicOS is an internal system. Accounts are created only by a Super
+# Admin through the invitation workflow. This setting must also be applied in
+# the hosted project's dashboard (Authentication -> Sign In / Providers ->
+# "Allow new users to sign up" OFF); the two are configured separately and
+# the dashboard value is the one that governs the hosted project.
+#
+# A database trigger (migration 0003) refuses any auth.users insert that has
+# no matching open invitation, so registration remains closed even if this
+# setting is changed by accident. Defence in depth is deliberate here.
+# ---------------------------------------------------------------------------
+enable_signup = false
+enable_anonymous_sign_ins = false
+enable_manual_linking = false
+
+[auth.email]
+enable_signup = false
+enable_confirmations = true
+double_confirm_changes = true
+secure_password_change = true
+max_frequency = "1m"
+otp_expiry = 3600
+
+[auth.email.template.invite]
+subject = "You have been invited to AcademicOS"
+
+[auth.sessions]
+# A session cannot outlive a working week, and an idle session expires in
+# eight hours. Both bound the window in which a forgotten signed-in device
+# can reach confidential records.
+timebox = "168h"
+inactivity_timeout = "8h"
+
+# External OAuth providers are disabled. Enabling one would create a route
+# into the system that the invitation workflow does not control.
+[auth.external.google]
+enabled = false

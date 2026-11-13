@@ -5,9 +5,11 @@ teams: meeting management, local microphone recording, automatic
 transcription, human-verified AI extraction of decisions and action items,
 task and daily-work tracking, and calendar integration.
 
-**Current status: Milestone 1 complete.** The web application runs on local
-demonstration data. No backend, authentication or AI service is connected
-yet, and the interface says so wherever it matters.
+**Current status: Milestone 2 complete, pending deployment.** The database
+schema, authentication, Row Level Security, private storage and audit
+logging are built and tested against local PostgreSQL. No Supabase project
+has been created yet, so the application still runs on local demonstration
+data and says so wherever it matters.
 
 ---
 
@@ -75,12 +77,30 @@ Run all of these from the repository root.
 | `npm test` | Unit tests (Vitest) |
 | `npm run typecheck` | TypeScript check, no emit |
 | `npm run verify:m1` | Browser verification of the Milestone 1 acceptance criteria |
+| `npm run test:db` | Database security suite — 95 tests against PostgreSQL |
+| `npm run test:all` | Frontend and database suites together |
+| `npm run db:reset` | Rebuild a local database from the migration files |
 
-`npm run verify:m1` drives the real interface in a headless browser and
-checks the acceptance criteria end to end. It requires `npm run preview` to
-be running in another terminal, and Playwright with Chromium installed.
+`npm run verify:m1` and `npm run verify:m2` drive the real interface in a
+headless browser. Both require `npm run preview` running in another terminal,
+and Playwright with Chromium installed.
+
+`npm run test:db` requires a PostgreSQL instance. It builds the schema from
+the real migration files rather than a snapshot, so a passing run says
+something about what would actually be deployed. Set
+`ACADEMICOS_TEST_DATABASE_URL` if your instance is not at the default.
 
 ---
+
+## Two modes
+
+With no backend configured, the application runs on local demonstration data
+and labels it as such on every screen. The login page says there is nothing
+to sign in to rather than redirecting past itself.
+
+With `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` set, it uses
+real authentication and real rows, and the demonstration labelling disappears.
+Nothing in between: the application never claims a session it does not have.
 
 ## What works today
 
@@ -106,7 +126,12 @@ implemented. Nothing in the interface simulates a successful AI result.
 | [docs/architecture.md](docs/architecture.md) | System design, modules, folder structure, navigation, API surface, security, deployment |
 | [docs/database-architecture.md](docs/database-architecture.md) | Entity relationships, key DDL, RLS policies, the AI approval gate |
 | [docs/implementation-plan.md](docs/implementation-plan.md) | Milestones M0–M8, timeline, cost, risks |
-| [docs/milestone-1-report.md](docs/milestone-1-report.md) | What was built, how it was verified, what remains |
+| [docs/security-model.md](docs/security-model.md) | Who can access what, how it is enforced, what is verified and what is not |
+| [docs/supabase-setup.md](docs/supabase-setup.md) | Project creation, region, keys, auth settings, deployment checks |
+| [docs/retention-and-consent.md](docs/retention-and-consent.md) | Both policies are unapproved; what exists and what you need to decide |
+| [docs/migration-and-backup.md](docs/migration-and-backup.md) | Local setup, migration procedure, rollback, backup and recovery |
+| [docs/milestone-1-report.md](docs/milestone-1-report.md) | Milestone 1: what was built and how it was verified |
+| [docs/milestone-2-report.md](docs/milestone-2-report.md) | Milestone 2: what was built, two defects the tests caught, what remains |
 | [docs/reverse-engineering-analysis.md](docs/reverse-engineering-analysis.md) | Reference analysis — framework retained; no source materials were available |
 
 ### Intended stack
@@ -141,7 +166,14 @@ components do not change.
 ## Security
 
 No API keys or secrets are committed to this repository. `.env` is
-git-ignored, and `.env.example` contains placeholder names only. Variables
-prefixed `VITE_` are embedded in the published browser bundle and must never
-hold a secret; the Supabase service-role key and all OAuth client secrets
-belong to the server-side AI service only.
+git-ignored, and `.env.example` contains placeholder names only.
+
+Variables prefixed `VITE_` are embedded in the published browser bundle and
+must never hold a secret. The Supabase **publishable** key belongs there and
+is designed to be public; the **service-role** key bypasses Row Level
+Security entirely and belongs only in the AI service's server-side
+environment.
+
+Authorisation is enforced by PostgreSQL, not by the browser. Deleting every
+role check in the frontend would not give any user access to one additional
+row. See [docs/security-model.md](docs/security-model.md).
