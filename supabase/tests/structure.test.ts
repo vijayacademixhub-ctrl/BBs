@@ -79,6 +79,40 @@ describe('row level security coverage', () => {
   })
 })
 
+describe('super admin scoping', () => {
+  it('uses the unscoped is_super_admin() in exactly the accepted places', async () => {
+    // is_super_admin() asks "a Super Admin of ANY team". Using it to gate a
+    // team's data grants every administrator access to every team — which is
+    // precisely the defect migrations 0016 and 0017 corrected.
+    //
+    // The accepted uses are institution-wide configuration, and the
+    // null-team fallback on the audit trail. This asserts the list exactly,
+    // so a sixth use cannot appear without someone deciding it belongs.
+    const { rows } = await db.query(`
+      select distinct p.polname
+      from pg_policy p
+      where pg_get_expr(p.polqual, p.polrelid) ~ 'is_super_admin\\(\\)'
+         or pg_get_expr(p.polwithcheck, p.polrelid) ~ 'is_super_admin\\(\\)'
+      order by 1
+    `)
+    expect(rows.map((r) => r.polname)).toEqual([
+      'app_settings_admin_write',
+      'audit_logs_super_admin_read',
+      'retention_admin_write',
+    ])
+  })
+
+  it('scopes meeting content access to the meeting\'s own team', async () => {
+    const { rows } = await db.query(`
+      select 1 from pg_proc
+      where proname = 'can_access_meeting_content'
+        and pronamespace = 'public'::regnamespace
+        and prosrc like '%is_super_admin_of%'
+    `)
+    expect(rows).toHaveLength(1)
+  })
+})
+
 describe('the anonymous role', () => {
   it('holds no privilege on any application table', async () => {
     const { rows } = await db.query(`

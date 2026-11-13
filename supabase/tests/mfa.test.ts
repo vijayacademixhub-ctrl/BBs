@@ -279,3 +279,70 @@ describe('administrator-assisted MFA reset', () => {
     expect(rows[0].actor_id).toBe(IDS.superAdmin)
   })
 })
+
+/* ======================================= reset requests are team-scoped == */
+
+describe('MFA reset requests are confined to the subject\'s own team', () => {
+  // `outsider` is a Super Admin — of a different team. Before migration 0017
+  // they could see and approve resets for members of this team, forging the
+  // authorisation a server-side operator is meant to act on.
+
+  it('are invisible to a Super Admin of another team', async () => {
+    await db.query('begin')
+    await db.query(
+      `insert into public.mfa_reset_requests (profile_id, reason, requested_by)
+       values ($1, 'Device lost; request raised by this team''s Super Admin.', $2)`,
+      [IDS.memberA, IDS.superAdmin],
+    )
+    await db.query("select set_config('request.jwt.claims', $1, true)", [
+      JSON.stringify({ sub: IDS.outsider, role: 'authenticated', aal: 'aal2' }),
+    ])
+    await db.query('set local role authenticated')
+    const { rows } = await db.query('select id from public.mfa_reset_requests')
+    await db.query('rollback')
+    expect(rows).toHaveLength(0)
+  })
+
+  it('cannot be raised by a Super Admin of another team', async () => {
+    const outcome = await asUserAttempt(db, 'outsider', () =>
+      db.query(
+        `insert into public.mfa_reset_requests (profile_id, reason, requested_by)
+         values ($1, 'Reset raised by an administrator of an unrelated team.', $2)`,
+        [IDS.memberA, IDS.outsider],
+      ),
+    )
+    expect(denialReason(outcome)).toMatch(/row-level security/i)
+  })
+
+  it('cannot be approved by a Super Admin of another team', async () => {
+    await db.query('begin')
+    const { rows: created } = await db.query(
+      `insert into public.mfa_reset_requests (profile_id, reason, requested_by)
+       values ($1, 'Awaiting approval by the correct administrator.', $2) returning id`,
+      [IDS.memberA, IDS.superAdmin],
+    )
+    await db.query("select set_config('request.jwt.claims', $1, true)", [
+      JSON.stringify({ sub: IDS.outsider, role: 'authenticated', aal: 'aal2' }),
+    ])
+    await db.query('set local role authenticated')
+    const result = await db.query(
+      `update public.mfa_reset_requests
+       set status = 'approved', approved_by = $2, approved_at = now() where id = $1`,
+      [created[0].id, IDS.outsider],
+    )
+    await db.query('rollback')
+    expect(result.rowCount).toBe(0)
+  })
+
+  it('remain fully usable by a Super Admin of the subject\'s own team', async () => {
+    // The fix must scope the privilege, not remove it.
+    const outcome = await asUserAttempt(db, 'superAdmin', () =>
+      db.query(
+        `insert into public.mfa_reset_requests (profile_id, reason, requested_by)
+         values ($1, 'Device replaced; identity confirmed in person.', $2)`,
+        [IDS.memberA, IDS.superAdmin],
+      ),
+    )
+    expect(outcome.error).toBe('')
+  })
+})

@@ -14,7 +14,8 @@
     "verify:m1": "npm run verify:m1 --workspace apps/web",
     "test:db": "vitest run --config vitest.db.config.mts",
     "test:all": "npm run test && npm run test:db",
-    "db:reset": "node scripts/db-reset.mjs"
+    "db:reset": "node scripts/db-reset.mjs",
+    "verify:deployment": "node scripts/verify-deployment.mjs"
   },
   "engines": {
     "node": ">=20"

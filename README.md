@@ -5,11 +5,12 @@ teams: meeting management, local microphone recording, automatic
 transcription, human-verified AI extraction of decisions and action items,
 task and daily-work tracking, and calendar integration.
 
-**Current status: Milestone 2 complete, pending deployment.** The database
-schema, authentication, Row Level Security, private storage and audit
-logging are built and tested against local PostgreSQL. No Supabase project
-has been created yet, so the application still runs on local demonstration
-data and says so wherever it matters.
+**Current status: ready for a first controlled deployment, pending approval.**
+The database schema, authentication, mandatory multi-factor authentication,
+Row Level Security, private storage and audit logging are built and tested
+against local PostgreSQL — 196 database tests. No Supabase project has been
+created, so the application still runs on local demonstration data and says
+so wherever it matters.
 
 ---
 
@@ -77,7 +78,8 @@ Run all of these from the repository root.
 | `npm test` | Unit tests (Vitest) |
 | `npm run typecheck` | TypeScript check, no emit |
 | `npm run verify:m1` | Browser verification of the Milestone 1 acceptance criteria |
-| `npm run test:db` | Database security suite — 190 tests against PostgreSQL |
+| `npm run test:db` | Database security suite — 196 tests against PostgreSQL |
+| `npm run verify:deployment` | Live verification against a real Supabase project |
 | `npm run test:all` | Frontend and database suites together |
 | `npm run db:reset` | Rebuild a local database from the migration files |
 
@@ -131,6 +133,10 @@ implemented. Nothing in the interface simulates a successful AI result.
 | [docs/mfa-setup.md](docs/mfa-setup.md) | Mandatory two-factor authentication, and what recovery does and does not exist |
 | [docs/backup-and-recovery.md](docs/backup-and-recovery.md) | Backup plan for all four data classes, restore procedures, responsibilities |
 | [docs/pre-deployment-checklist.md](docs/pre-deployment-checklist.md) | Ordered steps and owner decisions before anything is deployed |
+| [docs/m3-deployment-guide.md](docs/m3-deployment-guide.md) | Creating the Supabase project: ownership, region, plan, auth, storage, keys |
+| [docs/m3-migration-runbook.md](docs/m3-migration-runbook.md) | All 17 migrations: purpose, dependencies, validation query, rollback |
+| [docs/administrator-provisioning.md](docs/administrator-provisioning.md) | Creating the two Super Admin accounts securely |
+| [docs/m3-live-verification.md](docs/m3-live-verification.md) | What must pass before confidential data is entered |
 | [docs/supabase-setup.md](docs/supabase-setup.md) | Project creation, region, keys, auth settings, deployment checks |
 | [docs/retention-and-consent.md](docs/retention-and-consent.md) | Both policies are unapproved; what exists and what you need to decide |
 | [docs/migration-and-backup.md](docs/migration-and-backup.md) | Local setup, migration procedure, rollback, backup and recovery |

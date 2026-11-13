@@ -123,17 +123,53 @@ This interacts directly with deletion requests — see §6.
 Backups fail quietly. Naming who is responsible is the only thing that makes
 the failure visible before it matters.
 
-| Responsibility | Who | Cadence |
-|---|---|---|
-| Backups are running and succeeding | Named technical owner | Check weekly |
-| Encryption key is held in two places | Super Admin | Confirm at setup, then quarterly |
-| Off-site copy is current | Named technical owner | Monthly |
-| A restore is actually performed and verified | Named technical owner | Quarterly, and after any schema change |
-| Approving deletion and retention decisions | Institution, not the technical owner | As required |
+Every responsibility has a **primary** and a **secondary**. A single named
+owner is the same failure mode as a single Super Admin: it works until that
+person is on leave, ill, or has left.
 
-Two of these should be filled in with real names before deployment: who owns
-the backups, and who approves deletion. They are different people and
-different kinds of decision.
+| Responsibility | Primary | Secondary | Cadence |
+|---|---|---|---|
+| Backups are running and succeeding | _________ | _________ | Weekly |
+| Encryption key held in two places | _________ | _________ | At setup, then quarterly |
+| Off-site copy is current | _________ | _________ | Monthly |
+| A restore is performed and verified | _________ | _________ | Quarterly, and after any schema change |
+| Approving deletion and retention | Institution | — | As required |
+
+The secondary must be able to perform the task, not merely know it exists.
+That means they have the credentials, know where the off-site copy lives, and
+have done a restore at least once. A secondary who has never run the procedure
+is a name on a page.
+
+Approving deletion is deliberately not an engineering responsibility. It is
+an institutional decision and belongs with whoever is accountable for the
+records, not with whoever runs the scripts.
+
+### 4.1 Recovery Objectives
+
+These are **proposals**, not measurements. Nothing has been restored, so the
+actual recovery time is unknown. Replace the proposed figures with observed
+ones after the first restore test (§5.1), and treat any that cannot be met as
+a decision to revisit rather than a number to quietly leave in place.
+
+| Data class | RPO — how much may be lost | RTO — how long to restore | Basis |
+|---|---|---|---|
+| Database (Pro plan) | **24 hours** | 1–2 hours | Supabase daily backup, plus the scheduled dump |
+| Database (Free plan) | **24 hours**, and only if the scheduled dump runs | 1–2 hours | There is no automated backup on Free; the dump is the only copy |
+| Meeting recordings | **24 hours** | Hours to a day | Not in any Supabase backup. Restore speed is bounded by upload bandwidth, and audio is most of the bytes |
+| Documents | 24 hours | Under an hour | Smaller volume |
+| Transcripts and AI output | 24 hours | With the database | Stored in PostgreSQL |
+
+**What a 24-hour RPO actually means:** a failure at 16:00 loses everything
+since the previous night's backup. For an academic office that is likely a
+day of daily work entries, task updates, and possibly a meeting recording.
+Whether that is acceptable is a judgement for the institution, not a
+technical default — and if it is not acceptable, the options are more
+frequent dumps or Point-in-Time Recovery, which costs roughly USD 100/month
+on top of Pro.
+
+**A caution on RTO.** The figures above assume the backup exists, is
+readable, and the person restoring it has done it before. If any of those is
+untrue the real RTO is unbounded. That is the whole argument for §5.1.
 
 ---
 
@@ -227,7 +263,8 @@ Stated plainly, because this is a plan and not a report:
 - No restore has been tested, so the recovery time in §5.1 is unknown.
 - No encryption key has been generated or escrowed.
 - No off-site location has been chosen.
-- No technical owner has been named.
+- No primary or secondary owner has been named.
+- The recovery objectives in §4.1 are proposals and have never been measured.
 - The backup scripts in §3 are the documented commands, not scripts that
   exist in this repository and have been run.
 
