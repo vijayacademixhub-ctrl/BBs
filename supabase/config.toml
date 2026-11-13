@@ -72,6 +72,32 @@ otp_expiry = 3600
 [auth.email.template.invite]
 subject = "You have been invited to AcademicOS"
 
+# ---------------------------------------------------------------------------
+# SECURITY CONTROL — multi-factor authentication is mandatory.
+#
+# These settings make TOTP enrolment and verification available. They do NOT
+# make MFA compulsory: Supabase has no such switch. Compulsion is enforced in
+# the database, by restrictive RLS policies that require an `aal2` claim on
+# every table (migration 0015). A password-only session can reach no
+# confidential record regardless of what is configured here.
+#
+# Verification must stay enabled. Disabling it would disable the challenge
+# and verify APIs, which would lock out every enrolled user rather than
+# relaxing the requirement.
+# ---------------------------------------------------------------------------
+[auth.mfa]
+max_enrolled_factors = 10
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+# Phone factors are off: they would add an SMS provider, a cost, and a weaker
+# factor than TOTP for no benefit here.
+[auth.mfa.phone]
+enroll_enabled = false
+verify_enabled = false
+
 [auth.sessions]
 # A session cannot outlive a working week, and an idle session expires in
 # eight hours. Both bound the window in which a forgotten signed-in device

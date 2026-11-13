@@ -2,6 +2,7 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/app-shell'
 import { LoginPage } from '@/features/auth/login-page'
+import { MfaPage } from '@/features/auth/mfa-page'
 import { RequireAuth, RequireRole } from '@/features/auth/route-guards'
 import { LoadingRows } from '@/components/common/states'
 import { DashboardPage } from '@/features/dashboard/dashboard-page'
@@ -28,6 +29,9 @@ function Lazy({ children }: { children: ReactNode }) {
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
+  // Outside the shell: a session at aal1 can reach no application data, so
+  // rendering the navigation around this page would be misleading.
+  { path: '/mfa', element: <MfaPage /> },
   {
     path: '/',
     element: (

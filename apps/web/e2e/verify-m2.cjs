@@ -63,6 +63,16 @@ const seen = async (locator, timeout = 6000) => {
     await seen(page.getByText(/demonstration data/i)),
   )
 
+  await page.goto(BASE + '/mfa', { waitUntil: 'networkidle' })
+  check(
+    'MFA page states that there is no account to protect in sample mode',
+    await seen(page.getByText(/no backend is configured/i)),
+  )
+  check(
+    'MFA page does not fabricate an enrolment QR code without a backend',
+    (await page.locator('img[alt*="two-factor" i]').count()) === 0,
+  )
+
   await page.goto(BASE + '/admin/system', { waitUntil: 'networkidle' })
   check('role-gated admin route renders for the sample Super Admin', await seen(page.getByText(/system status/i)))
 

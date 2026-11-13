@@ -35,22 +35,47 @@ describe('row level security coverage', () => {
     expect(rows.map((r) => r.table_name)).toEqual([])
   })
 
-  it('leaves no table both RLS-enabled and silently wide open', async () => {
-    // A table with RLS and no policy denies everything, which is intentional
-    // for server-only tables. This records which ones they are, so that the
-    // set cannot grow by accident.
+  it('records exactly which tables are unreachable from the browser', async () => {
+    // A table with RLS and no PERMISSIVE policy denies everything, which is
+    // intentional for server-only tables. Restrictive policies are excluded
+    // from this count because they only ever narrow access — a table whose
+    // sole policy is restrictive is still closed.
+    //
+    // The list is asserted exactly so that it cannot grow or shrink unnoticed.
     const { rows } = await db.query(`
       select c.relname as table_name
       from pg_class c
       join pg_namespace n on n.oid = c.relnamespace
       where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity
-        and not exists (select 1 from pg_policy p where p.polrelid = c.oid)
+        and not exists (
+          select 1 from pg_policy p where p.polrelid = c.oid and p.polpermissive
+        )
       order by 1
     `)
     expect(rows.map((r) => r.table_name)).toEqual([
       'calendar_credentials',
       'calendar_sync_jobs',
     ])
+  })
+
+  it('requires a verified second factor on every table', async () => {
+    // Mandatory MFA is enforced by a restrictive policy per table. A table
+    // added later without one would be readable by a password-only session,
+    // which is exactly the regression this guards against.
+    const { rows } = await db.query(`
+      select c.relname as table_name
+      from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relkind = 'r'
+        and not exists (
+          select 1 from pg_policy p
+          where p.polrelid = c.oid
+            and not p.polpermissive
+            and pg_get_expr(p.polqual, p.polrelid) like '%is_mfa_verified%'
+        )
+      order by 1
+    `)
+    expect(rows.map((r) => r.table_name)).toEqual([])
   })
 })
 
@@ -125,6 +150,20 @@ describe('security definer functions', () => {
 })
 
 describe('storage buckets', () => {
+  it('require a verified second factor, like every application table', async () => {
+    // storage.objects sits outside the application schema and is not covered
+    // by the loop that applies the policy in public. It needs its own, and a
+    // missing one was a real gap found during hardening.
+    const { rows } = await db.query(`
+      select 1
+      from pg_policy p
+      where p.polrelid = 'storage.objects'::regclass
+        and not p.polpermissive
+        and pg_get_expr(p.polqual, p.polrelid) like '%is_mfa_verified%'
+    `)
+    expect(rows).toHaveLength(1)
+  })
+
   it('are all private and all have a size limit and a mime allowlist', async () => {
     const { rows } = await db.query(
       'select id, public, file_size_limit, allowed_mime_types from storage.buckets order by id',
@@ -182,6 +221,7 @@ describe('referential integrity', () => {
     expect(rows.map((r) => r.child).sort()).toEqual([
       'calendar_connections',
       'daily_work_logs',
+      'mfa_reset_requests',
       'notifications',
       'team_members',
       'user_preferences',

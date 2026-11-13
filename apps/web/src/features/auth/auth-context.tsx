@@ -21,6 +21,17 @@ import type { AppRole, Profile } from '@/types/domain'
 
 export type AuthMode = 'sample' | 'supabase'
 
+/**
+ * Where the session stands with respect to multi-factor authentication.
+ *
+ *   'not_required'  — sample mode; there is no authentication at all
+ *   'unknown'       — factors have not been read yet
+ *   'enrol'         — signed in, no verified factor exists, must enrol
+ *   'challenge'     — a factor exists but this session has not verified it
+ *   'verified'      — aal2; confidential records are reachable
+ */
+export type MfaStage = 'not_required' | 'unknown' | 'enrol' | 'challenge' | 'verified'
+
 export interface AuthState {
   mode: AuthMode
   status: 'loading' | 'signed_in' | 'signed_out' | 'suspended' | 'error'
@@ -29,6 +40,10 @@ export interface AuthState {
   role: AppRole | null
   teamId: string | null
   error: string | null
+  /** Where this session stands on the second factor. */
+  mfaStage: MfaStage
+  /** Re-reads the assurance level and factor list from Supabase. */
+  refreshMfa: () => Promise<void>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
   refresh: () => Promise<void>
@@ -52,6 +67,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isSupabaseConfigured ? 'loading' : 'signed_in',
   )
   const [error, setError] = React.useState<string | null>(null)
+  const [mfaStage, setMfaStage] = React.useState<MfaStage>(
+    isSupabaseConfigured ? 'unknown' : 'not_required',
+  )
+
+  /**
+   * Determines the MFA stage from Supabase rather than from local state.
+   *
+   * `getAuthenticatorAssuranceLevel()` reports what this session has reached
+   * and what it could reach. A user with a verified factor who has not yet
+   * answered the challenge has currentLevel aal1 and nextLevel aal2; a user
+   * with no factor at all has both at aal1 and must enrol.
+   *
+   * This is only the interface's view. It decides which screen to show, not
+   * what data is returned — the database refuses confidential rows to any
+   * aal1 session regardless of what this function concludes.
+   */
+  const resolveMfaStage = React.useCallback(async (): Promise<MfaStage> => {
+    if (!isSupabaseConfigured) return 'not_required'
+    const supabase = getSupabase()
+    const { data, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    if (aalError || !data) return 'unknown'
+    if (data.currentLevel === 'aal2') return 'verified'
+    return data.nextLevel === 'aal2' ? 'challenge' : 'enrol'
+  }, [])
+
+  const refreshMfa = React.useCallback(async () => {
+    setMfaStage(await resolveMfaStage())
+  }, [resolveMfaStage])
 
   const loadProfile = React.useCallback(async (userId: string) => {
     const supabase = getSupabase()
@@ -119,8 +162,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(data.session)
       if (data.session?.user) {
         void loadProfile(data.session.user.id)
+        void resolveMfaStage().then((stage) => {
+          if (active) setMfaStage(stage)
+        })
       } else {
         setStatus('signed_out')
+        setMfaStage('unknown')
       }
     })
 
@@ -133,10 +180,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfile(null)
         setTeamId(null)
         setStatus('signed_out')
+        setMfaStage('unknown')
         return
       }
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
         void loadProfile(nextSession.user.id)
+        // MFA_CHALLENGE_VERIFIED also arrives here on some versions; recomputing
+        // on every session change keeps the stage honest without depending on
+        // which event name a given release emits.
+        void resolveMfaStage().then(setMfaStage)
       }
     })
 
@@ -144,7 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       active = false
       listener.subscription.unsubscribe()
     }
-  }, [loadProfile])
+  }, [loadProfile, resolveMfaStage])
 
   const signIn = React.useCallback(async (email: string, password: string) => {
     if (!isSupabaseConfigured) {
@@ -176,6 +228,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null)
     setTeamId(null)
     setStatus(isSupabaseConfigured ? 'signed_out' : 'signed_in')
+    setMfaStage(isSupabaseConfigured ? 'unknown' : 'not_required')
   }, [])
 
   const refresh = React.useCallback(async () => {
@@ -193,11 +246,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role: profile?.role ?? null,
       teamId,
       error,
+      mfaStage,
+      refreshMfa,
       signIn,
       signOut,
       refresh,
     }),
-    [status, session, profile, teamId, error, signIn, signOut, refresh],
+    [status, session, profile, teamId, error, mfaStage, refreshMfa, signIn, signOut, refresh],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

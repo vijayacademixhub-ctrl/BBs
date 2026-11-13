@@ -24,9 +24,21 @@ data is reachable.
 | Layer | Enforces | Can it be bypassed from a browser? |
 |---|---|---|
 | Table privileges (`GRANT`/`REVOKE`) | Whether a role may touch a table at all | No. Checked before any policy. |
+| Restrictive RLS policies | A verified second factor on every table and on storage | No. ANDed with every permissive policy. |
 | Row Level Security | Which rows a role may see or change | No. |
 | Triggers | Invariants that must hold regardless of role — the AI approval gate, role-escalation guards, closed registration | No. Not even the service role: the AI gate is a trigger, and `BYPASSRLS` does not bypass triggers. |
 | Frontend guards | Which controls are drawn | Yes, trivially. Not relied upon. |
+
+## 2a. Multi-Factor Authentication
+
+Mandatory. A restrictive policy on every table and on `storage.objects`
+requires an `aal2` claim, so a password-only session reaches no confidential
+record regardless of role. The only carve-out is that an unverified session
+may read its own `profiles` row, so the enrolment screen can show who is
+signed in; it may read nothing else and write nothing.
+
+Full detail, including why recovery is administrator-assisted and what that
+requires procedurally, is in [mfa-setup.md](mfa-setup.md).
 
 ## 3. Roles
 
@@ -220,13 +232,15 @@ Stated because they are real, not because they are acceptable indefinitely.
 - **Role is read per request** rather than embedded in the JWT. A role change
   takes effect immediately, which is the behaviour wanted for suspension, at
   the cost of a lookup per policy evaluation. Indexed, and fine at this scale.
+- **Audit rows that carry no team are visible to any Super Admin.** Rows
+  naming a team are scoped to that team's Super Admin. Profile, recording and
+  transcript changes have no team column to copy from. Identical in a
+  single-team deployment; a real gap if a second team is added, and the fix
+  is to resolve and store the team on those rows.
 - **A Super Admin is highly privileged.** They can read every transcript and
   suspend anyone. The audit trail records what they do and they cannot alter
   it, but there is no second-person approval for administrative actions. For
   ten people that is proportionate; for a larger deployment it would not be.
-- **No MFA.** Supabase supports it. For a system holding confidential
-  institutional records it should be enabled before real data is entered,
-  and it is worth doing at the same time as the first account.
 - **Team creation is effectively server-side only.** The policy requires a
   Super Admin role *in the team being created*, which cannot be satisfied for
   a team that does not yet exist. Deliberate, since the system is scoped to

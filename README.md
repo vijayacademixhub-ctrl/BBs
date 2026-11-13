@@ -77,7 +77,7 @@ Run all of these from the repository root.
 | `npm test` | Unit tests (Vitest) |
 | `npm run typecheck` | TypeScript check, no emit |
 | `npm run verify:m1` | Browser verification of the Milestone 1 acceptance criteria |
-| `npm run test:db` | Database security suite — 95 tests against PostgreSQL |
+| `npm run test:db` | Database security suite — 190 tests against PostgreSQL |
 | `npm run test:all` | Frontend and database suites together |
 | `npm run db:reset` | Rebuild a local database from the migration files |
 
@@ -127,6 +127,10 @@ implemented. Nothing in the interface simulates a successful AI result.
 | [docs/database-architecture.md](docs/database-architecture.md) | Entity relationships, key DDL, RLS policies, the AI approval gate |
 | [docs/implementation-plan.md](docs/implementation-plan.md) | Milestones M0–M8, timeline, cost, risks |
 | [docs/security-model.md](docs/security-model.md) | Who can access what, how it is enforced, what is verified and what is not |
+| [docs/security-hardening-report.md](docs/security-hardening-report.md) | Pre-deployment hardening: two defects found and fixed, what remains unmet |
+| [docs/mfa-setup.md](docs/mfa-setup.md) | Mandatory two-factor authentication, and what recovery does and does not exist |
+| [docs/backup-and-recovery.md](docs/backup-and-recovery.md) | Backup plan for all four data classes, restore procedures, responsibilities |
+| [docs/pre-deployment-checklist.md](docs/pre-deployment-checklist.md) | Ordered steps and owner decisions before anything is deployed |
 | [docs/supabase-setup.md](docs/supabase-setup.md) | Project creation, region, keys, auth settings, deployment checks |
 | [docs/retention-and-consent.md](docs/retention-and-consent.md) | Both policies are unapproved; what exists and what you need to decide |
 | [docs/migration-and-backup.md](docs/migration-and-backup.md) | Local setup, migration procedure, rollback, backup and recovery |
@@ -176,4 +180,14 @@ environment.
 
 Authorisation is enforced by PostgreSQL, not by the browser. Deleting every
 role check in the frontend would not give any user access to one additional
-row. See [docs/security-model.md](docs/security-model.md).
+row.
+
+Two-factor authentication is mandatory and is enforced the same way: a
+restrictive RLS policy on every table requires a verified second factor, so a
+password-only session can reach no confidential record whatever the interface
+allows. Supabase issues no backup codes, so recovery is administrator-assisted
+— read [docs/mfa-setup.md](docs/mfa-setup.md) §4 before the first account is
+created.
+
+See [docs/security-model.md](docs/security-model.md) and
+[docs/security-hardening-report.md](docs/security-hardening-report.md).

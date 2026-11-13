@@ -60,8 +60,46 @@ export type Actor = keyof typeof IDS | 'anon'
  * would present it: the `authenticated` role plus a JWT claims GUC. Everything
  * happens inside a transaction that is always rolled back, so tests cannot
  * contaminate one another.
+ *
+ * `aal` defaults to 'aal2' because multi-factor authentication is mandatory,
+ * so that is what a normal working session looks like. Pass 'aal1' to model a
+ * session that has signed in with a password but has not yet completed, or
+ * has never enrolled, a second factor.
  */
 export async function asUser<T>(
+  client: pg.Client,
+  actor: Exclude<Actor, 'anon'>,
+  fn: () => Promise<T>,
+  aal: 'aal1' | 'aal2' = 'aal2',
+): Promise<T> {
+  await client.query('begin')
+  try {
+    await client.query("select set_config('request.jwt.claims', $1, true)", [
+      JSON.stringify({ sub: IDS[actor], role: 'authenticated', aal }),
+    ])
+    await client.query('set local role authenticated')
+    return await fn()
+  } finally {
+    await client.query('rollback')
+  }
+}
+
+/** A password-only session: signed in, second factor not yet verified. */
+export async function asUserAal1<T>(
+  client: pg.Client,
+  actor: Exclude<Actor, 'anon'>,
+  fn: () => Promise<T>,
+): Promise<T> {
+  return asUser(client, actor, fn, 'aal1')
+}
+
+/**
+ * A session carrying no `aal` claim at all.
+ *
+ * Supabase treats a missing claim as aal1. This models an older token, or one
+ * issued before MFA was required, and must be refused just as aal1 is.
+ */
+export async function asUserNoAalClaim<T>(
   client: pg.Client,
   actor: Exclude<Actor, 'anon'>,
   fn: () => Promise<T>,
@@ -97,7 +135,11 @@ export async function asUnknownSubject<T>(client: pg.Client, fn: () => Promise<T
   await client.query('begin')
   try {
     await client.query("select set_config('request.jwt.claims', $1, true)", [
-      JSON.stringify({ sub: '99999999-9999-4999-8999-999999999999', role: 'authenticated' }),
+      JSON.stringify({
+        sub: '99999999-9999-4999-8999-999999999999',
+        role: 'authenticated',
+        aal: 'aal2',
+      }),
     ])
     await client.query('set local role authenticated')
     return await fn()
@@ -145,8 +187,18 @@ export async function asUserAttempt(
   client: pg.Client,
   actor: Exclude<Actor, 'anon'>,
   fn: () => Promise<unknown>,
+  aal: 'aal1' | 'aal2' = 'aal2',
 ): Promise<Attempt> {
-  return asUser(client, actor, () => runAttempt(fn))
+  return asUser(client, actor, () => runAttempt(fn), aal)
+}
+
+/** Attempts an operation from a password-only session. */
+export async function asUserAal1Attempt(
+  client: pg.Client,
+  actor: Exclude<Actor, 'anon'>,
+  fn: () => Promise<unknown>,
+): Promise<Attempt> {
+  return asUser(client, actor, () => runAttempt(fn), 'aal1')
 }
 
 /** The same, unauthenticated. */

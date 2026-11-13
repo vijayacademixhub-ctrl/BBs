@@ -15,7 +15,7 @@ import { useAuth } from './auth-context'
  * do it if every guard in this file were deleted.
  */
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { status, error } = useAuth()
+  const { status, error, mode, mfaStage } = useAuth()
   const location = useLocation()
 
   if (status === 'loading') {
@@ -45,6 +45,29 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 
   if (status !== 'signed_in') {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  }
+
+  // Multi-factor authentication is mandatory. A session that has not verified
+  // a second factor is sent to enrol or to answer the challenge.
+  //
+  // This is a redirect, not a security boundary. The database refuses every
+  // confidential row to an aal1 session whatever this component decides, so
+  // its job is to show the user the way forward rather than an empty page —
+  // which, per Supabase's own guidance, is the right response to encountering
+  // a lower assurance level than expected.
+  if (mode === 'supabase' && (mfaStage === 'enrol' || mfaStage === 'challenge')) {
+    return <Navigate to="/mfa" replace state={{ from: location.pathname }} />
+  }
+
+  // 'unknown' means the factor list has not come back yet. Showing the
+  // application during that window would briefly render a shell whose queries
+  // all return nothing, which reads as breakage.
+  if (mode === 'supabase' && mfaStage === 'unknown') {
+    return (
+      <div className="p-6">
+        <LoadingRows rows={4} />
+      </div>
+    )
   }
 
   return <>{children}</>

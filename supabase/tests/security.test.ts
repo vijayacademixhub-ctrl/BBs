@@ -351,7 +351,7 @@ describe('audit logs', () => {
   it('record a role change automatically', async () => {
     await db.query('begin')
     await db.query("select set_config('request.jwt.claims', $1, true)", [
-      JSON.stringify({ sub: IDS.superAdmin, role: 'authenticated' }),
+      JSON.stringify({ sub: IDS.superAdmin, role: 'authenticated', aal: 'aal2' }),
     ])
     await db.query('set local role authenticated')
     await db.query(`update public.team_members set role = 'coordinator' where profile_id = $1`, [
@@ -413,7 +413,7 @@ describe('calendar credentials', () => {
       [IDS.memberA],
     )
     await db.query("select set_config('request.jwt.claims', $1, true)", [
-      JSON.stringify({ sub: IDS.superAdmin, role: 'authenticated' }),
+      JSON.stringify({ sub: IDS.superAdmin, role: 'authenticated', aal: 'aal2' }),
     ])
     await db.query('set local role authenticated')
     const { rows } = await db.query('select id from public.calendar_connections')

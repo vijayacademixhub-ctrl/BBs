@@ -46,6 +46,18 @@ create table if not exists auth.users (
   banned_until       timestamptz
 );
 
+-- Supabase records enrolled factors here. Reproduced so that tests can model
+-- an enrolled-but-unverified user, and so a policy referring to it would
+-- resolve locally.
+create table if not exists auth.mfa_factors (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null references auth.users (id) on delete cascade,
+  friendly_name text,
+  factor_type   text not null default 'totp',
+  status        text not null default 'unverified',
+  created_at    timestamptz not null default now()
+);
+
 create or replace function auth.jwt()
 returns jsonb
 language sql
