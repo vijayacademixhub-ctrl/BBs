@@ -1,6 +1,6 @@
 import {
   BarChart3, Bell, CalendarDays, CheckSquare, ClipboardList, Cpu, LayoutDashboard,
-  Mic, MessageSquareText, ShieldCheck, Users, FileText, Settings,
+  Mic, MessageSquareText, ShieldCheck, Users, FileText, Settings, Library,
 } from 'lucide-react'
 import type { AppRole } from '@/types/domain'
 
@@ -28,7 +28,10 @@ export interface NavGroup {
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Overview',
-    items: [{ label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard }],
+    items: [
+      { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+      { label: 'Master Index', to: '/master-index', icon: Library },
+    ],
   },
   {
     label: 'Meetings',

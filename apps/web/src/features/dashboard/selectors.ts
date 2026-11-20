@@ -1,5 +1,7 @@
 import { isDueToday, isOverdue } from '@/lib/format'
+import { computeHealth } from '@/lib/registry/health'
 import type { DailyWorkLog, Meeting, Task } from '@/types/domain'
+import type { Register, RegisterHealth, RegisterRecord } from '@/types/registry'
 import { parseISO, isAfter, isSameDay, subDays } from 'date-fns'
 
 export interface DashboardCounts {
@@ -58,4 +60,37 @@ export function recentWorkLogs(logs: DailyWorkLog[], limit = 4): DailyWorkLog[] 
 /** Meetings with audio that has not yet been transcribed. */
 export function awaitingProcessing(meetings: Meeting[]): Meeting[] {
   return meetings.filter((m) => m.hasRecording && m.transcriptStatus !== 'completed')
+}
+
+/**
+ * Register figures for the dashboard.
+ *
+ * Computed from the same records the registers themselves show, through the
+ * same `computeHealth`, so the dashboard cannot report a different number
+ * from the page it links to.
+ */
+export interface RegistrySummary {
+  entries: Array<{ register: Register; health: RegisterHealth }>
+  records: number
+  open: number
+  incomplete: number
+  overdue: number
+}
+
+export function registrySummary(
+  registers: Register[],
+  records: RegisterRecord[],
+): RegistrySummary {
+  const entries = registers.map((register) => ({
+    register,
+    health: computeHealth(register, records.filter((r) => r.registerId === register.id)),
+  }))
+
+  return {
+    entries,
+    records: entries.reduce((sum, e) => sum + e.health.total, 0),
+    open: entries.reduce((sum, e) => sum + e.health.open, 0),
+    incomplete: entries.reduce((sum, e) => sum + e.health.incomplete, 0),
+    overdue: entries.reduce((sum, e) => sum + e.health.overdue, 0),
+  }
 }

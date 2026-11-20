@@ -22,6 +22,9 @@ const SettingsPage = lazy(() => import('@/features/settings/settings-page').then
 const SystemStatusPage = lazy(() => import('@/features/system/system-status-page').then((m) => ({ default: m.SystemStatusPage })))
 const NotFoundPage = lazy(() => import('@/features/system/not-found-page').then((m) => ({ default: m.NotFoundPage })))
 const PlannedPage = lazy(() => import('@/features/system/planned-page').then((m) => ({ default: m.PlannedPage })))
+const RegistryHubPage = lazy(() => import('@/features/registry/registry-hub-page').then((m) => ({ default: m.RegistryHubPage })))
+const RegisterPage = lazy(() => import('@/features/registry/register-page').then((m) => ({ default: m.RegisterPage })))
+const RegisterWindowShell = lazy(() => import('@/features/registry/standalone-window').then((m) => ({ default: m.RegisterWindowShell })))
 
 function Lazy({ children }: { children: ReactNode }) {
   return <Suspense fallback={<LoadingRows rows={5} />}>{children}</Suspense>
@@ -45,6 +48,25 @@ const createRouter =
 
 export const router = createRouter([
   { path: '/login', element: <LoginPage /> },
+  /**
+   * A register in its own operating-system window.
+   *
+   * Outside the application shell on purpose — see
+   * features/registry/standalone-window.tsx. Still behind RequireAuth, so a
+   * pop-up URL is no way around signing in or around the second factor.
+   */
+  {
+    path: '/w/master-index',
+    element: (
+      <RequireAuth>
+        <Lazy><RegisterWindowShell /></Lazy>
+      </RequireAuth>
+    ),
+    children: [
+      { index: true, element: <Lazy><RegistryHubPage /></Lazy> },
+      { path: ':slug', element: <Lazy><RegisterPage standalone /></Lazy> },
+    ],
+  },
   // Outside the shell: a session at aal1 can reach no application data, so
   // rendering the navigation around this page would be misleading.
   { path: '/mfa', element: <MfaPage /> },
@@ -63,6 +85,9 @@ export const router = createRouter([
       { path: 'meetings/new', element: <Lazy><MeetingFormPage mode="create" /></Lazy> },
       { path: 'meetings/:id', element: <Lazy><MeetingDetailPage /></Lazy> },
       { path: 'meetings/:id/edit', element: <Lazy><MeetingFormPage mode="edit" /></Lazy> },
+
+      { path: 'master-index', element: <Lazy><RegistryHubPage /></Lazy> },
+      { path: 'master-index/:slug', element: <Lazy><RegisterPage /></Lazy> },
 
       { path: 'tasks', element: <Lazy><TasksPage /></Lazy> },
       { path: 'daily-work', element: <Lazy><DailyWorkPage /></Lazy> },
