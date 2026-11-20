@@ -19,6 +19,8 @@ import { useToast } from '@/components/common/toast'
 import {
   groupRegisters, useAllRegisterRecords, useCreateRegister, useRegisterChanges, useRegisters,
 } from '@/hooks/use-registry'
+import { dataSource, importWorkbookRegisters } from '@/lib/api'
+import { useQueryClient } from '@tanstack/react-query'
 import { computeHealth } from '@/lib/registry/health'
 import { formatRelative } from '@/lib/format'
 import type { Register, RegisterRecord } from '@/types/registry'
@@ -141,8 +143,19 @@ export function RegistryHubPage() {
             <EmptyState
               icon={LayoutGrid}
               title="No registers yet"
-              description="A register is a table the team keeps — documents, allocations, reviews. Create the first one."
-              action={<Button onClick={() => setCreating(true)}><Plus /> New register</Button>}
+              description={
+                dataSource === 'supabase'
+                  ? 'Load the five registers from the team\'s Master Index workbook, or start an empty one.'
+                  : 'A register is a table the team keeps — documents, allocations, reviews. Create the first one.'
+              }
+              action={
+                <div className="flex flex-wrap justify-center gap-2">
+                  {dataSource === 'supabase' ? <ImportWorkbookButton /> : null}
+                  <Button variant={dataSource === 'supabase' ? 'outline' : 'default'} onClick={() => setCreating(true)}>
+                    <Plus /> New register
+                  </Button>
+                </div>
+              }
             />
           ) : (
             <section className="space-y-2" aria-labelledby="registers">
@@ -181,6 +194,48 @@ export function RegistryHubPage() {
 
       <NewRegisterDialog open={creating} onOpenChange={setCreating} />
     </>
+  )
+}
+
+/**
+ * Loads the workbook's registers into a database that has none.
+ *
+ * Offered rather than run on startup: importing a shared index is a decision
+ * someone takes knowingly, and doing it automatically risks a second copy
+ * appearing beside one a colleague has already begun editing.
+ */
+function ImportWorkbookButton() {
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+  const [busy, setBusy] = useState(false)
+
+  return (
+    <Button
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true)
+        try {
+          const result = await importWorkbookRegisters()
+          await queryClient.invalidateQueries({ queryKey: ['registers'] })
+          await queryClient.invalidateQueries({ queryKey: ['register-records'] })
+          toast({
+            title: `${result.registers} registers loaded`,
+            description: `${result.records} records imported from the workbook.`,
+            tone: 'success',
+          })
+        } catch (error) {
+          toast({
+            title: 'The workbook could not be imported',
+            description: error instanceof Error ? error.message : undefined,
+            tone: 'error',
+          })
+        } finally {
+          setBusy(false)
+        }
+      }}
+    >
+      <Database /> {busy ? 'Importing…' : 'Import the Master Index workbook'}
+    </Button>
   )
 }
 
