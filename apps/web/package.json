@@ -14,7 +14,8 @@
     "verify:m2": "node e2e/verify-m2.cjs",
     "build:standalone": "node scripts/build-standalone.mjs",
     "verify:registry": "node e2e/verify-registry.cjs",
-    "verify:capture": "node e2e/verify-capture.cjs"
+    "verify:capture": "node e2e/verify-capture.cjs",
+    "verify:live": "node e2e/verify-live.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.6",

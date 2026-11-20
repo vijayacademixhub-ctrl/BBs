@@ -82,6 +82,7 @@ Run all of these from the repository root.
 | `npm run verify:m1` | Browser verification of the Milestone 1 acceptance criteria |
 | `npm run verify:registry` | Browser verification of the Master Index — 30 checks |
 | `npm run verify:capture` | Browser verification of audio-free capture — 20 checks |
+| `npm run verify:live` | End-to-end against a real backend and a real key — 18 checks |
 | `npm run test:db` | Database security suite — 216 tests against PostgreSQL |
 | `npm run db:evaluate` | Local evaluation environment: two synthetic teams, access matrix |
 | `npm run verify:deployment` | Live verification against a real Supabase project |
@@ -177,6 +178,7 @@ anything a model proposes is marked unverified until a person confirms it.
 | [docs/master-index.md](docs/master-index.md) | The register model, editing, adding columns and registers, the separate window |
 | [docs/audio-free-capture.md](docs/audio-free-capture.md) | Why no audio is kept, and the four things that make that true |
 | [docs/calendar-setup.md](docs/calendar-setup.md) | ICS today; what a Google service account needs, and why an API key cannot work |
+| [docs/accounts-and-access.md](docs/accounts-and-access.md) | The fifteen accounts, what each role can do, two-factor policy, adding and removing people |
 | [docs/vercel-deployment.md](docs/vercel-deployment.md) | Deploying this repository, its environment variables, and who can see the result |
 | [docs/reverse-engineering-analysis.md](docs/reverse-engineering-analysis.md) | Reference analysis — framework retained; no source materials were available |
 

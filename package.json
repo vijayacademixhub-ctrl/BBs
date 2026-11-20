@@ -18,7 +18,8 @@
     "verify:deployment": "node scripts/verify-deployment.mjs",
     "db:evaluate": "node scripts/db-evaluate.mjs",
     "verify:registry": "npm run verify:registry --workspace apps/web",
-    "verify:capture": "npm run verify:capture --workspace apps/web"
+    "verify:capture": "npm run verify:capture --workspace apps/web",
+    "verify:live": "npm run verify:live --workspace apps/web"
   },
   "engines": {
     "node": ">=20"
