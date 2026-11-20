@@ -1,6 +1,13 @@
 /**
  * What this deployment can actually do.
  *
+ * These functions are ES modules. `api/package.json` declares
+ * `"type": "module"` for this directory alone, because the compiled output is
+ * ESM and Node would otherwise load it as CommonJS and fail on the first
+ * `export` — which is exactly what the first deployment did. The declaration
+ * is scoped here rather than at the repository root so it cannot change how
+ * anything in apps/web is interpreted.
+ *
  * The interface asks this on load so it can tell the truth about itself
  * rather than offering a button that fails. It reports only whether a
  * credential is present — never a value, a prefix or a length, because any of
