@@ -16,7 +16,9 @@
     "test:all": "npm run test && npm run test:db",
     "db:reset": "node scripts/db-reset.mjs",
     "verify:deployment": "node scripts/verify-deployment.mjs",
-    "db:evaluate": "node scripts/db-evaluate.mjs"
+    "db:evaluate": "node scripts/db-evaluate.mjs",
+    "verify:registry": "npm run verify:registry --workspace apps/web",
+    "verify:capture": "npm run verify:capture --workspace apps/web"
   },
   "engines": {
     "node": ">=20"

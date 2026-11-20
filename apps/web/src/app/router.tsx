@@ -22,6 +22,8 @@ const SettingsPage = lazy(() => import('@/features/settings/settings-page').then
 const SystemStatusPage = lazy(() => import('@/features/system/system-status-page').then((m) => ({ default: m.SystemStatusPage })))
 const NotFoundPage = lazy(() => import('@/features/system/not-found-page').then((m) => ({ default: m.NotFoundPage })))
 const PlannedPage = lazy(() => import('@/features/system/planned-page').then((m) => ({ default: m.PlannedPage })))
+const CapturePage = lazy(() => import('@/features/meetings/capture-page').then((m) => ({ default: m.CapturePage })))
+const MeetingNotesPage = lazy(() => import('@/features/meetings/notes-page').then((m) => ({ default: m.MeetingNotesPage })))
 const RegistryHubPage = lazy(() => import('@/features/registry/registry-hub-page').then((m) => ({ default: m.RegistryHubPage })))
 const RegisterPage = lazy(() => import('@/features/registry/register-page').then((m) => ({ default: m.RegisterPage })))
 const RegisterWindowShell = lazy(() => import('@/features/registry/standalone-window').then((m) => ({ default: m.RegisterWindowShell })))
@@ -92,43 +94,14 @@ export const router = createRouter([
       { path: 'tasks', element: <Lazy><TasksPage /></Lazy> },
       { path: 'daily-work', element: <Lazy><DailyWorkPage /></Lazy> },
 
-      {
-        path: 'recorder',
-        element: (
-          <Lazy>
-            <PlannedPage
-              title="Meeting Recorder"
-              milestone="Milestone 3"
-              description="Browser microphone recording with an explicit consent step before any permission request."
-              capabilities={[
-                'Participant consent confirmation shown before the microphone is requested',
-                'Start, pause, resume and stop, with a visible recording indicator throughout',
-                'Honest permission handling — recording is never reported as active unless it is',
-                'Chunked, resumable upload so a long meeting does not fail at the final step',
-                'Clear guidance for iOS, where Safari stops recording when the screen locks',
-              ]}
-            />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'transcripts',
-        element: (
-          <Lazy>
-            <PlannedPage
-              title="Transcripts"
-              milestone="Milestone 4"
-              description="Automatic speech transcription for English, Kannada and Hindi, including mixed-language discussion."
-              capabilities={[
-                'Timestamped transcript segments linked to the source audio',
-                'Transcription model configurable so accuracy can be benchmarked before it is fixed',
-                'Transcript editing and export',
-                'Job status reported honestly, including when the processing service is offline',
-              ]}
-            />
-          </Lazy>
-        ),
-      },
+      // Capture and notes are built. The audio path the earlier design
+      // planned is not: audio is never stored, so there is no recorder in the
+      // sense of something that produces a recording.
+      { path: 'capture', element: <Lazy><CapturePage /></Lazy> },
+      { path: 'recorder', element: <Navigate to="/capture" replace /> },
+      { path: 'notes', element: <Lazy><MeetingNotesPage /></Lazy> },
+      { path: 'transcripts', element: <Navigate to="/notes" replace /> },
+
       {
         path: 'calendar',
         element: (

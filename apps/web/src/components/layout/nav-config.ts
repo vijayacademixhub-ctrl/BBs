@@ -37,8 +37,8 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Meetings',
     items: [
       { label: 'Meetings', to: '/meetings', icon: CalendarDays },
-      { label: 'Recorder', to: '/recorder', icon: Mic, planned: true },
-      { label: 'Transcripts', to: '/transcripts', icon: FileText, planned: true },
+      { label: 'Capture', to: '/capture', icon: Mic },
+      { label: 'Notes', to: '/notes', icon: FileText },
     ],
   },
   {

@@ -12,7 +12,9 @@
     "test:watch": "vitest",
     "verify:m1": "node e2e/verify-m1.cjs",
     "verify:m2": "node e2e/verify-m2.cjs",
-    "build:standalone": "node scripts/build-standalone.mjs"
+    "build:standalone": "node scripts/build-standalone.mjs",
+    "verify:registry": "node e2e/verify-registry.cjs",
+    "verify:capture": "node e2e/verify-capture.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.6",
