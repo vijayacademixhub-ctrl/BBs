@@ -239,10 +239,14 @@ export async function removeRegisterField(registerId: string, fieldId: string): 
 /* ----------------------------------------------------------------- records */
 
 export async function listRegisterRecords(registerId?: string): Promise<RegisterRecord[]> {
+  // created_at then id. A bulk import writes every row in one statement, so
+  // the timestamps are identical and ordering by time alone is not stable —
+  // the grid reshuffled between loads, which made an edit look lost.
   let query = getSupabase()
     .from('register_records')
     .select('id, register_id, values, archived_at, updated_by, created_at, updated_at')
     .order('created_at')
+    .order('id')
   if (registerId) query = query.eq('register_id', registerId)
   const { data, error } = await query
   fail('Could not load the records', error)

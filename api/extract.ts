@@ -16,7 +16,8 @@
  * inferred from "next month" is worse than no date, because it looks precise.
  */
 
-const GEMINI_DEFAULT_MODEL = 'gemini-2.5-flash'
+/** Verified against this deployment's key on 20-Nov-2026. */
+const GEMINI_DEFAULT_MODEL = 'gemini-3.6-flash'
 const OPENAI_DEFAULT_URL = 'https://api.openai.com/v1/chat/completions'
 const OPENAI_DEFAULT_MODEL = 'gpt-4o-mini'
 const MAX_TRANSCRIPT = 120_000

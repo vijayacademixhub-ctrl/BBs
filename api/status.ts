@@ -26,7 +26,8 @@ export async function GET(): Promise<Response> {
   // OpenAI-compatible key for either is honoured as a fallback, so the
   // provider can be changed without a code change.
   const gemini = Boolean(process.env.GEMINI_API_KEY)
-  const geminiModel = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash'
+  const geminiModel = process.env.GEMINI_MODEL ?? 'gemini-3.6-flash'
+  const transcribeModel = process.env.GEMINI_TRANSCRIBE_MODEL ?? 'gemini-3.5-transcribe'
   const transcription = gemini || Boolean(process.env.TRANSCRIPTION_API_KEY)
   const extraction = gemini || Boolean(process.env.AI_API_KEY)
   const calendar = Boolean(
@@ -39,7 +40,7 @@ export async function GET(): Promise<Response> {
       model: !transcription
         ? null
         : gemini
-          ? geminiModel
+          ? transcribeModel
           : (process.env.TRANSCRIPTION_MODEL ?? 'whisper-1'),
     },
     extraction: {

@@ -22,7 +22,12 @@
  * prefix: that would compile the key into the browser bundle and publish it.
  */
 
-const GEMINI_DEFAULT_MODEL = 'gemini-2.5-flash'
+/**
+ * Purpose-built for speech, and the default for that reason. Verified against
+ * this deployment's key on 20-Nov-2026 — gemini-2.5-flash, which this file
+ * originally defaulted to, is no longer offered to new keys and returns 404.
+ */
+const GEMINI_DEFAULT_MODEL = 'gemini-3.5-transcribe'
 const OPENAI_DEFAULT_URL = 'https://api.openai.com/v1/audio/transcriptions'
 const OPENAI_DEFAULT_MODEL = 'whisper-1'
 
@@ -109,7 +114,7 @@ async function transcribeWithGemini(
   contentType: string,
   language: string,
 ): Promise<{ text: string; model: string }> {
-  const model = process.env.GEMINI_MODEL ?? GEMINI_DEFAULT_MODEL
+  const model = process.env.GEMINI_TRANSCRIBE_MODEL ?? GEMINI_DEFAULT_MODEL
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`
 
   const prompt =
