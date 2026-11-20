@@ -1,5 +1,5 @@
-import { BUILT_IN_REGISTERS } from '../workbook/registers.js'
-import { REGISTER_SEED_RECORDS } from '../workbook/seed.js'
+import { BUILT_IN_REGISTERS } from './_workbook/registers.js'
+import { REGISTER_SEED_RECORDS } from './_workbook/seed.js'
 
 /**
  * Loads the Master Index workbook into the database, from the server.
@@ -9,6 +9,11 @@ import { REGISTER_SEED_RECORDS } from '../workbook/seed.js'
  * and readable by anyone who opened the site, signed in or not. Moving the
  * import here is the fix: the seed is imported only by this function, which
  * never ships to a browser.
+ *
+ * The workbook lives in api/_workbook. The leading underscore is what keeps
+ * it from becoming a route of its own, and being inside api/ is what lets
+ * the build bundle it into this function — a first attempt kept it a level
+ * above and the function failed at runtime, unable to resolve it.
  *
  * It writes as the caller, not as an administrator. The request carries the
  * user's own access token and this forwards it to PostgREST, so Row Level

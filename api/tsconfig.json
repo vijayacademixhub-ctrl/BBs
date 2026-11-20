@@ -11,5 +11,5 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["*.ts", "**/*.ts", "../workbook/*.ts", "../apps/web/src/types/registry.ts"]
+  "include": ["*.ts", "**/*.ts", "../apps/web/src/types/registry.ts"]
 }

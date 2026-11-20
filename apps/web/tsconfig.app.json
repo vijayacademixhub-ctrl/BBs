@@ -18,8 +18,8 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "baseUrl": ".",
-    "paths": { "@/*": ["./src/*"], "@workbook/*": ["../../workbook/*"] },
+    "paths": { "@/*": ["./src/*"], "@workbook/*": ["../../api/_workbook/*"] },
     "types": ["vitest/globals", "@testing-library/jest-dom", "node"]
   },
-  "include": ["src", "../../workbook/registers.ts"]
+  "include": ["src", "../../api/_workbook/registers.ts"]
 }

@@ -10,7 +10,7 @@ export default defineConfig({
       // The register definitions are shared with the server function in /api,
       // so they sit outside this package. The records that go with them are
       // not aliased: they must never reach the browser bundle.
-      '@workbook': path.resolve(import.meta.dirname, '../../workbook'),
+      '@workbook': path.resolve(import.meta.dirname, '../../api/_workbook'),
     },
   },
   server: { port: 5173, host: true },

@@ -7,7 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
-      '@workbook': path.resolve(import.meta.dirname, '../../workbook'),
+      '@workbook': path.resolve(import.meta.dirname, '../../api/_workbook'),
     },
   },
   test: {

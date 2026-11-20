@@ -1,4 +1,4 @@
-import type { Register, RegisterField } from '../apps/web/src/types/registry.js'
+import type { Register, RegisterField } from '../../apps/web/src/types/registry.js'
 
 /**
  * The registers the Master Index workbook arrived with.
