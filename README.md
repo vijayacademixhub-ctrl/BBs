@@ -1,9 +1,9 @@
 # AcademicOS
 
-An AI-powered academic operations platform for research and coursework
-teams: meeting management, local microphone recording, automatic
-transcription, human-verified AI extraction of decisions and action items,
-task and daily-work tracking, and calendar integration.
+An academic operations platform for research and coursework teams: the
+Master Index as a set of editable registers, meeting capture that keeps the
+transcript and the data points but no audio, task and daily-work tracking,
+and a calendar that covers everything with a date on it.
 
 **Current status: ready for a controlled evaluation deployment, pending
 approval.** Not ready for institutional records — see
@@ -80,6 +80,8 @@ Run all of these from the repository root.
 | `npm test` | Unit tests (Vitest) |
 | `npm run typecheck` | TypeScript check, no emit |
 | `npm run verify:m1` | Browser verification of the Milestone 1 acceptance criteria |
+| `npm run verify:registry` | Browser verification of the Master Index — 30 checks |
+| `npm run verify:capture` | Browser verification of audio-free capture — 20 checks |
 | `npm run test:db` | Database security suite — 216 tests against PostgreSQL |
 | `npm run db:evaluate` | Local evaluation environment: two synthetic teams, access matrix |
 | `npm run verify:deployment` | Live verification against a real Supabase project |
@@ -109,18 +111,41 @@ Nothing in between: the application never claims a session it does not have.
 
 ## What works today
 
-Meeting scheduling, editing and removal; task creation, assignment, filtering
-and status changes; daily work entries; notifications; dark mode; and a
-responsive layout for desktop, tablet and mobile. Data is held in the
-browser's local storage, is specific to one device, and can be reset from
-**System status**.
+**The Master Index.** The team's workbook as a set of registers — documents,
+work allocation, weekly review, source map, programme structure — each
+editable in place: click a cell, type, Enter. Columns and whole registers can
+be added from the interface, so recording something new costs no release. The
+hub opens on what needs attention rather than on the index itself, and one
+search box covers every column of every register. Any register opens in a
+separate operating-system window. See
+[docs/master-index.md](docs/master-index.md).
+
+**Meeting capture without audio.** The microphone stream is transcribed in
+forty-second segments and each is discarded as its text returns, so no
+recording of a meeting ever exists. What is kept is the note: transcript,
+data points, decisions, actions. Writing or pasting a transcript works with
+nothing configured; recording needs a transcription key on the deployment.
+See [docs/audio-free-capture.md](docs/audio-free-capture.md).
+
+**The calendar.** Meetings, task due dates and every dated row in every
+register, in one agenda. Export to `.ics` works anywhere with no credentials.
+Blocking time on a shared Google Calendar needs a service account — an API
+key cannot write to a calendar. See
+[docs/calendar-setup.md](docs/calendar-setup.md).
+
+**The rest.** Meeting scheduling and editing; task creation, assignment,
+filtering and status changes; daily work entries; notifications; dark mode;
+and a responsive layout for desktop, tablet and mobile.
+
+Without a backend configured, everything is held in the browser's local
+storage, is specific to one device, and can be reset from **System status**.
 
 ### What is deliberately not working
 
-Recording, transcription, AI extraction, the verification centre, the
-assistant and calendar synchronisation are not built. Their pages are
-reachable from the navigation and state plainly that they are not yet
-implemented. Nothing in the interface simulates a successful AI result.
+The verification centre and the academic assistant are not built. Their pages
+are reachable from the navigation and state plainly that they are not yet
+implemented. Nothing in the interface simulates a successful AI result, and
+anything a model proposes is marked unverified until a person confirms it.
 
 ---
 
@@ -149,20 +174,27 @@ implemented. Nothing in the interface simulates a successful AI result.
 | [docs/migration-and-backup.md](docs/migration-and-backup.md) | Local setup, migration procedure, rollback, backup and recovery |
 | [docs/milestone-1-report.md](docs/milestone-1-report.md) | Milestone 1: what was built and how it was verified |
 | [docs/milestone-2-report.md](docs/milestone-2-report.md) | Milestone 2: what was built, two defects the tests caught, what remains |
+| [docs/master-index.md](docs/master-index.md) | The register model, editing, adding columns and registers, the separate window |
+| [docs/audio-free-capture.md](docs/audio-free-capture.md) | Why no audio is kept, and the four things that make that true |
+| [docs/calendar-setup.md](docs/calendar-setup.md) | ICS today; what a Google service account needs, and why an API key cannot work |
+| [docs/vercel-deployment.md](docs/vercel-deployment.md) | Deploying this repository, its environment variables, and who can see the result |
 | [docs/reverse-engineering-analysis.md](docs/reverse-engineering-analysis.md) | Reference analysis — framework retained; no source materials were available |
 
-### Intended stack
+### Stack
 
-React, Vite, TypeScript, Tailwind and shadcn-compatible components on
-Cloudflare Pages; Supabase for PostgreSQL, authentication, storage and
-realtime; a Python FastAPI service running faster-whisper and Ollama with
-Qwen3 on a local Windows host, reached through a Cloudflare Tunnel.
+React, Vite, TypeScript, Tailwind and shadcn-compatible components, deployed
+on Vercel with four serverless functions holding the keys the browser must
+not see; Supabase for PostgreSQL, authentication, storage and realtime.
+
+Transcription and extraction call any OpenAI-compatible endpoint, configured
+by environment variable, so the provider can change without a code change.
 
 ### Governing design rules
 
-1. The web client never calls the AI service directly. AI work is queued in
-   PostgreSQL and pulled by the worker when it is available, so the
-   application keeps working while the Windows host is offline.
+1. The browser never holds a key. Transcription, extraction and calendar
+   writes go through functions on the deployment, which read their
+   credentials from the server environment. A variable prefixed `VITE_` is
+   published in the bundle, so no secret may ever carry that prefix.
 2. AI output never becomes an official task or calendar event without human
    approval, enforced by a database trigger rather than application code.
 3. Authorisation is enforced by Row Level Security. Frontend role checks are
@@ -170,6 +202,9 @@ Qwen3 on a local Windows host, reached through a Cloudflare Tunnel.
 4. The AI assistant retrieves using the requesting user's credentials, so it
    cannot surface meetings that user is not entitled to read.
 5. Sample and unverified AI content are always labelled as such.
+6. Meeting audio is never stored. It is transcribed in segments and
+   discarded; `meeting_notes.audio_retained` is constrained to false, so a
+   row claiming otherwise cannot exist.
 
 ### Changing the visual design
 
