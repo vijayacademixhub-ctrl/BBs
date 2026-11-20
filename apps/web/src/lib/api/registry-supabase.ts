@@ -1,8 +1,6 @@
 import { getSupabase } from '@/lib/supabase/client'
 import type { MeetingDataPoint, MeetingNote } from '@/types/domain'
 import type { Register, RegisterChange, RegisterField, RegisterRecord } from '@/types/registry'
-import { BUILT_IN_REGISTERS } from '@/lib/registry/built-in'
-import { REGISTER_SEED_RECORDS } from '@/lib/sample/registry-seed'
 import type {
   MeetingNoteInput, RegisterFieldInput, RegisterInput, RegisterRecordInput,
 } from './types'
@@ -557,84 +555,35 @@ function slugify(name: string): string {
 }
 
 /**
- * Creates the workbook's registers in a database that has none.
+ * Loads the workbook's registers into a database that has none.
  *
- * Offered as an explicit action in System status rather than run on startup.
- * Importing a shared index is a decision someone should take knowingly, and
- * doing it automatically would risk a second copy appearing beside one a
- * colleague had already loaded and begun editing.
+ * The work happens in the server function at /api/import-registers, which
+ * holds the workbook. It used to happen here, which put the team's real
+ * index — names, allocations, Drive links — into the published browser
+ * bundle for anyone to read without signing in.
+ *
+ * The caller's access token goes with the request, so the function writes as
+ * them and Row Level Security applies exactly as it would in the interface.
  */
 export async function importWorkbookRegisters(): Promise<{ registers: number; records: number }> {
-  const teamId = await currentTeamId()
-  const profileId = await currentProfileId()
-  const client = getSupabase()
+  const { data } = await getSupabase().auth.getSession()
+  const token = data.session?.access_token
+  if (!token) throw new Error('Sign in before importing the workbook.')
 
-  const existing = await listRegisters()
-  const existingSlugs = new Set(existing.map((r) => r.slug))
+  const response = await fetch('/api/import-registers', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}` },
+  })
 
-  let registers = 0
-  let records = 0
-
-  for (const definition of BUILT_IN_REGISTERS) {
-    if (existingSlugs.has(definition.slug)) continue
-
-    const { data, error } = await client
-      .from('registers')
-      .insert({
-        team_id: teamId,
-        slug: definition.slug,
-        name: definition.name,
-        description: definition.description,
-        group_name: definition.group,
-        icon: definition.icon,
-        title_field_id: definition.titleFieldId,
-        status_field_id: definition.statusFieldId ?? null,
-        owner_field_id: definition.ownerFieldId ?? null,
-        due_field_id: definition.dueFieldId ?? null,
-        updated_field_id: definition.updatedFieldId ?? null,
-        done_values: definition.doneValues ?? [],
-        // Written by the service role path only; the insert policy refuses
-        // built_in from a browser session, so this import marks them false and
-        // protection comes from the application until an administrator runs
-        // the server-side import.
-        built_in: false,
-        created_by: profileId,
-      })
-      .select('id')
-      .single()
-    fail(`Could not create the ${definition.name} register`, error)
-    const registerId = (data as unknown as Row).id as string
-    registers += 1
-
-    const { error: fieldError } = await client.from('register_fields').insert(
-      definition.fields.map((field, index) => ({
-        register_id: registerId,
-        field_key: field.id,
-        label: field.label,
-        kind: field.kind,
-        options: field.options ?? [],
-        in_grid: field.inGrid ?? true,
-        help: field.help ?? '',
-        built_in: true,
-        position: index,
-      })),
-    )
-    fail(`Could not create the ${definition.name} columns`, fieldError)
-
-    const rows = REGISTER_SEED_RECORDS[definition.slug] ?? []
-    if (rows.length) {
-      const { error: recordError } = await client.from('register_records').insert(
-        rows.map((row) => ({
-          register_id: registerId,
-          values: row.values,
-          created_by: profileId,
-          updated_by: profileId,
-        })),
-      )
-      fail(`Could not import the ${definition.name} records`, recordError)
-      records += rows.length
+  if (!response.ok) {
+    let body: { message?: string; detail?: string } = {}
+    try {
+      body = (await response.json()) as typeof body
+    } catch {
+      // A non-JSON body means something other than our function answered.
     }
+    throw new Error(body.message ?? `The import failed (${response.status}).`)
   }
 
-  return { registers, records }
+  return (await response.json()) as { registers: number; records: number }
 }

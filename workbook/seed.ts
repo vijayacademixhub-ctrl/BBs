@@ -5,6 +5,13 @@
  * docs/source-data/Master_Index.xlsx. Edit the workbook and re-run the
  * importer rather than editing this file by hand.
  *
+ * It lives outside apps/web deliberately. This is the team's real index —
+ * staff names, allocations and Drive folder links — and while it sat in the
+ * browser's source tree it was compiled into the published bundle, where
+ * anyone who opened the site could read all of it without signing in. It is
+ * now imported only by the server function in api/import-registers.ts, which
+ * runs on the deployment and never ships to a browser.
+ *
  * This is the starting content of the registers, not a fixed table: every
  * value here can be edited in the application, and both records and columns
  * can be added. Hyperlink targets are carried across from the workbook, so a

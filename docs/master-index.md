@@ -51,7 +51,15 @@ rewritten.
 Drive hyperlinks were carried across from the workbook's cells, so a link
 opens the same folder it opened in Excel. The import is reproducible:
 `scripts/import_master_index.py` reads `docs/source-data/Master_Index.xlsx`
-and regenerates `apps/web/src/lib/sample/registry-seed.ts`.
+and regenerates `workbook/seed.ts`.
+
+That file sits outside `apps/web` deliberately. While it lived in the
+browser's source tree it was compiled into the published bundle, so the whole
+index — staff names, allocations, Drive folder links — could be read by
+anyone who opened the site, without signing in. It is now imported only by
+the server function `api/import-registers.ts`, which runs on the deployment.
+The register *definitions* (column names and types) are shared with the
+browser through `workbook/registers.ts`, which holds no record content.
 
 The workbook's **Member Summary** sheet was not imported. It was a sheet of
 formulas counting the allocation sheet, and it is now computed on the page
@@ -146,7 +154,10 @@ a register imported from the workbook cannot be deleted at all.
 
 Loading the workbook into a fresh database is an explicit action rather than
 something that happens on startup, so a second copy cannot appear beside one
-a colleague has already begun editing.
+a colleague has already begun editing. The import runs on the server and
+writes with the caller's own access token, so it is subject to the same Row
+Level Security as anything that person does in the interface — it cannot
+write into a team they are not in.
 
 ## 9. Verifying it
 

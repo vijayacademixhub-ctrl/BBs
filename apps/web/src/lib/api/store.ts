@@ -4,7 +4,6 @@ import {
   SAMPLE_MEETINGS, SAMPLE_NOTIFICATIONS, SAMPLE_PROFILES, SAMPLE_TASKS, SAMPLE_WORK_LOGS,
 } from '@/lib/sample/seed'
 import { BUILT_IN_REGISTERS } from '@/lib/registry/built-in'
-import { REGISTER_SEED_RECORDS } from '@/lib/sample/registry-seed'
 
 /**
  * Milestone 1 data store.
@@ -33,27 +32,15 @@ interface Database {
 }
 
 /**
- * Register records are seeded from the imported workbook. Ids are derived
- * from the register and the row's position rather than generated, so a
- * reseed produces the same ids and a stored edit is not orphaned.
+ * Registers start empty without a backend.
+ *
+ * The workbook's records used to be seeded here, which meant they were
+ * compiled into the published bundle and readable by anyone who opened the
+ * site without signing in. They now live in workbook/seed.ts, imported only
+ * by the server function that loads them into the database.
  */
 function seedRegisterRecords(): RegisterRecord[] {
-  const now = '2026-11-20T00:00:00.000Z'
-  const out: RegisterRecord[] = []
-  for (const register of BUILT_IN_REGISTERS) {
-    const rows = REGISTER_SEED_RECORDS[register.slug] ?? []
-    rows.forEach((row, index) => {
-      out.push({
-        id: `${register.id}_r${String(index + 1).padStart(3, '0')}`,
-        registerId: register.id,
-        values: { ...row.values },
-        createdAt: now,
-        updatedAt: now,
-        archivedAt: null,
-      })
-    })
-  }
-  return out
+  return []
 }
 
 function seed(): Database {
