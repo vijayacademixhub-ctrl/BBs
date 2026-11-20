@@ -14,13 +14,14 @@
  * those narrow a guess.
  *
  * Runs on the server, so the keys it reads are never in the browser bundle.
+ *
+ * Exported as a named method rather than as a default. Vercel reads a default
+ * export with the Node `(req, res)` signature and ignores what it returns; a
+ * named `GET` gets the Web `Request`/`Response` signature these functions are
+ * written against.
  */
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== 'GET') {
-    return json({ error: 'Use GET.' }, 405)
-  }
-
+export async function GET(): Promise<Response> {
   const transcription = Boolean(process.env.TRANSCRIPTION_API_KEY)
   const extraction = Boolean(process.env.AI_API_KEY)
   const calendar = Boolean(

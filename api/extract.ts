@@ -37,11 +37,7 @@ Rules you must follow:
 - If the transcript contains none of a category, return an empty array for it.
 - Return no prose outside the JSON object.`
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== 'POST') {
-    return json({ error: 'Use POST.' }, 405)
-  }
-
+export async function POST(request: Request): Promise<Response> {
   const key = process.env.AI_API_KEY
   if (!key) {
     return json(

@@ -23,11 +23,7 @@ const DEFAULT_MODEL = 'whisper-1'
 /** Comfortably inside the platform's body limit, with room for overhead. */
 const MAX_BYTES = 4 * 1024 * 1024
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== 'POST') {
-    return json({ error: 'Use POST.' }, 405)
-  }
-
+export async function POST(request: Request): Promise<Response> {
   const key = process.env.TRANSCRIPTION_API_KEY
   if (!key) {
     return json(

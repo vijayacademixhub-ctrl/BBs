@@ -36,11 +36,7 @@ interface BlockRequest {
   idempotencyKey?: string
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== 'POST') {
-    return json({ error: 'Use POST.' }, 405)
-  }
-
+export async function POST(request: Request): Promise<Response> {
   const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
   const privateKey = process.env.GOOGLE_PRIVATE_KEY
   if (!email || !privateKey) {
