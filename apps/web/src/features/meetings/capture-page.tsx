@@ -21,8 +21,8 @@ import {
 import {
   formatElapsed, isCaptureSupported, SegmentedRecorder, SEGMENT_SECONDS,
 } from '@/lib/capture/segmented-recorder'
-import type { MeetingDataPoint, MeetingLanguage, NoteSource } from '@/types/domain'
-import { LANGUAGE_LABEL } from '@/types/domain'
+import type { DataPointDateKind, MeetingDataPoint, MeetingLanguage, NoteSource } from '@/types/domain'
+import { DATE_KIND_LABEL, LANGUAGE_LABEL } from '@/types/domain'
 
 /**
  * Meeting capture.
@@ -60,6 +60,7 @@ export function CapturePage() {
   const [transcriptModel, setTranscriptModel] = useState<string | undefined>()
   const [elapsed, setElapsed] = useState(0)
   const [segmentsDone, setSegmentsDone] = useState(0)
+  const [segmentsSilent, setSegmentsSilent] = useState(0)
   const [pendingSegments, setPendingSegments] = useState(0)
   const [recorderState, setRecorderState] = useState<'idle' | 'recording' | 'paused' | 'stopping' | 'stopped'>('idle')
   const [captureError, setCaptureError] = useState<string | null>(null)
@@ -96,8 +97,14 @@ export function CapturePage() {
         if (result.text.trim()) {
           setTranscript((current) => (current ? `${current} ${result.text.trim()}` : result.text.trim()))
         }
-        setTranscriptModel(result.model)
-        setSegmentsDone((n) => n + 1)
+        // A silent segment is counted but does not claim a model: saying it
+        // was transcribed by one would be untrue.
+        if (!result.skipped) {
+          setTranscriptModel(result.model)
+          setSegmentsDone((n) => n + 1)
+        } else {
+          setSegmentsSilent((n) => n + 1)
+        }
       } catch (error) {
         const message =
           error instanceof ServiceError && error.isNotConfigured
@@ -166,6 +173,8 @@ export function CapturePage() {
           label: point.label,
           value: point.value,
           unit: point.unit,
+          date: point.date,
+          dateKind: point.dateKind,
           evidence: point.evidence,
           // Marked as the model's, and unverified, so nothing it produced can
           // be mistaken for something a person checked.
@@ -174,10 +183,20 @@ export function CapturePage() {
         })),
       ])
       setDecisions((current) => [...current, ...result.decisions])
-      setActionItems((current) => [...current, ...result.actionItems])
+      setActionItems((current) => [
+        ...current,
+        // An owner and a deadline are folded into the line rather than
+        // dropped, since they are usually the part that matters.
+        ...result.actionItems.map((item) =>
+          [item.action, item.owner ? `— ${item.owner}` : '', item.dueDate ? `(by ${item.dueDate})` : '']
+            .filter(Boolean)
+            .join(' '),
+        ),
+      ])
+      const dated = result.dataPoints.filter((point) => point.date).length
       toast({
         title: `${result.dataPoints.length} data points proposed`,
-        description: 'Each is marked unverified until you confirm it.',
+        description: `${dated} carry a stated date. Each is unverified until you confirm it.`,
         tone: 'info',
       })
     } catch (error) {
@@ -228,6 +247,7 @@ export function CapturePage() {
       setSummary('')
       setElapsed(0)
       setSegmentsDone(0)
+      setSegmentsSilent(0)
     } catch (error) {
       toast({
         title: 'The notes were not saved',
@@ -398,6 +418,9 @@ export function CapturePage() {
               </Badge>
               {pendingSegments > 0 ? (
                 <Badge variant="info">{pendingSegments} in flight</Badge>
+              ) : null}
+              {segmentsSilent > 0 ? (
+                <Badge variant="outline">{segmentsSilent} silent, not sent</Badge>
               ) : null}
               <span>{wordCount} words so far</span>
             </div>
@@ -609,6 +632,60 @@ function ReviewPanel(props: {
                       <Trash2 className="size-4" />
                       <span className="sr-only">Remove</span>
                     </Button>
+                  </div>
+
+                  {/* The date the figure belongs to. Left empty when none was
+                      stated — an invented date reads as precision that is not
+                      there. */}
+                  <div className="mt-2 grid gap-2 sm:grid-cols-[auto_1fr_1fr]">
+                    <select
+                      value={point.dateKind ?? 'as_of'}
+                      aria-label={`Data point ${index + 1} date meaning`}
+                      onChange={(event) =>
+                        props.setDataPoints((current) =>
+                          current.map((p) =>
+                            p.id === point.id
+                              ? { ...p, dateKind: event.target.value as DataPointDateKind }
+                              : p,
+                          ),
+                        )
+                      }
+                      className="h-9 rounded-md border border-input bg-card px-2 text-sm shadow-sm"
+                    >
+                      {Object.entries(DATE_KIND_LABEL).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      type="date"
+                      value={point.date ?? ''}
+                      aria-label={`Data point ${index + 1} date`}
+                      onChange={(event) =>
+                        props.setDataPoints((current) =>
+                          current.map((p) =>
+                            p.id === point.id
+                              ? { ...p, date: event.target.value || undefined }
+                              : p,
+                          ),
+                        )
+                      }
+                    />
+                    <Input
+                      value={point.unit ?? ''}
+                      aria-label={`Data point ${index + 1} unit`}
+                      placeholder="Unit, if any"
+                      onChange={(event) =>
+                        props.setDataPoints((current) =>
+                          current.map((p) =>
+                            p.id === point.id
+                              ? { ...p, unit: event.target.value || undefined }
+                              : p,
+                          ),
+                        )
+                      }
+                    />
                   </div>
 
                   {point.evidence ? (

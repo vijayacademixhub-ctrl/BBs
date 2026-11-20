@@ -376,7 +376,7 @@ export async function listRegisterChanges(limit = 25): Promise<RegisterChange[]>
 const NOTE_SELECT = `
   id, meeting_id, title, source, language, transcript, transcript_model, summary,
   captured_minutes, audio_retained, created_by, created_at, updated_at,
-  meeting_note_data_points (id, label, value, unit, evidence, origin, verified, position),
+  meeting_note_data_points (id, label, value, unit, point_date, date_kind, evidence, origin, verified, position),
   meeting_note_items (id, kind, content, position)
 `
 
@@ -389,6 +389,8 @@ function toNote(row: Row): MeetingNote {
       label: p.label as string,
       value: p.value as string,
       unit: (p.unit as string) ?? undefined,
+      date: (p.point_date as string) ?? undefined,
+      dateKind: (p.date_kind as MeetingDataPoint['dateKind']) ?? undefined,
       evidence: (p.evidence as string) ?? undefined,
       origin: p.origin as MeetingDataPoint['origin'],
       verified: p.verified as boolean,
@@ -467,6 +469,10 @@ async function writeNoteChildren(noteId: string, input: MeetingNoteInput): Promi
         label: p.label,
         value: p.value,
         unit: p.unit ?? null,
+        point_date: p.date ?? null,
+        // A kind without a date describes nothing, and the database refuses
+        // the pair; drop the kind rather than send a row that will bounce.
+        date_kind: p.date ? (p.dateKind ?? 'as_of') : null,
         evidence: p.evidence ?? null,
         origin: p.origin,
         verified: p.verified,

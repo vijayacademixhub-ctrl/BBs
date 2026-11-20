@@ -82,16 +82,35 @@ export interface DailyWorkLog {
  * from so a reader can check it against the transcript rather than trusting
  * the extraction.
  */
+export type DataPointDateKind = 'as_of' | 'due' | 'decided_on' | 'event'
+
 export interface MeetingDataPoint {
   id: string
   label: string
   value: string
   unit?: string
+  /**
+   * The date this point refers to, where one was stated. A figure with no
+   * date reads as a current fact, and six weeks later nobody can tell whether
+   * it still is — so the date is carried with the figure rather than left to
+   * the meeting it came from.
+   */
+  date?: string
+  /** What the date means: the figure's as-of date, a deadline, the date a
+   *  decision was taken, or the date of an event. */
+  dateKind?: DataPointDateKind
   /** The sentence in the transcript this came from. */
   evidence?: string
   /** Who or what produced it, and whether a person has checked it. */
   origin: 'person' | 'ai'
   verified: boolean
+}
+
+export const DATE_KIND_LABEL: Record<DataPointDateKind, string> = {
+  as_of: 'as of',
+  due: 'due',
+  decided_on: 'decided on',
+  event: 'on',
 }
 
 export type NoteSource = 'live_capture' | 'pasted_transcript' | 'manual'

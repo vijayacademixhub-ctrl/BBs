@@ -1,4 +1,5 @@
 import type { MeetingDataPoint, MeetingLanguage } from '@/types/domain'
+import { hasAudibleContent, toWav16kMono } from './wav'
 
 /**
  * The server-side endpoints.
@@ -85,29 +86,46 @@ export async function fetchServiceStatus(): Promise<ServiceStatus> {
 /**
  * Sends one audio segment and gets its text back.
  *
- * The blob is passed straight to fetch and is not retained here. The caller
- * drops its own reference as soon as this resolves, which is what keeps the
- * amount of audio in existence to one segment.
+ * The segment is converted to 16 kHz mono WAV first, because the
+ * transcription model cannot read the WebM that Chrome records and because
+ * the conversion cuts the size enough to stay inside the request limit.
+ *
+ * Neither blob is retained here. Both go out of scope when this resolves,
+ * which is what keeps the amount of audio in existence to one segment.
  */
 export async function transcribeSegment(
   blob: Blob,
   language: MeetingLanguage,
-): Promise<{ text: string; model: string }> {
+): Promise<{ text: string; model: string; skipped?: boolean }> {
+  const wav = await toWav16kMono(blob)
+
+  // A silent segment is not worth a request, and a model asked to transcribe
+  // silence will sometimes describe it instead of returning nothing.
+  if (!(await hasAudibleContent(wav))) {
+    return { text: '', model: 'none', skipped: true }
+  }
+
   const response = await fetch(`/api/transcribe?language=${encodeURIComponent(language)}`, {
     method: 'POST',
-    headers: { 'content-type': blob.type || 'audio/webm' },
-    body: blob,
+    headers: { 'content-type': 'audio/wav' },
+    body: wav,
   })
   if (!response.ok) throw await failure(response)
   const body = (await response.json()) as { text?: string; model?: string }
   return { text: body.text ?? '', model: body.model ?? 'unknown' }
 }
 
+export interface ExtractedAction {
+  action: string
+  owner?: string
+  dueDate?: string
+}
+
 export interface ExtractionResult {
   summary: string
   dataPoints: Array<Omit<MeetingDataPoint, 'id' | 'origin' | 'verified'>>
   decisions: string[]
-  actionItems: string[]
+  actionItems: ExtractedAction[]
   model: string
 }
 

@@ -22,8 +22,13 @@
  */
 
 export async function GET(): Promise<Response> {
-  const transcription = Boolean(process.env.TRANSCRIPTION_API_KEY)
-  const extraction = Boolean(process.env.AI_API_KEY)
+  // One Gemini key covers both transcription and extraction. An
+  // OpenAI-compatible key for either is honoured as a fallback, so the
+  // provider can be changed without a code change.
+  const gemini = Boolean(process.env.GEMINI_API_KEY)
+  const geminiModel = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash'
+  const transcription = gemini || Boolean(process.env.TRANSCRIPTION_API_KEY)
+  const extraction = gemini || Boolean(process.env.AI_API_KEY)
   const calendar = Boolean(
     process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY,
   )
@@ -31,11 +36,19 @@ export async function GET(): Promise<Response> {
   return json({
     transcription: {
       configured: transcription,
-      model: transcription ? (process.env.TRANSCRIPTION_MODEL ?? 'whisper-1') : null,
+      model: !transcription
+        ? null
+        : gemini
+          ? geminiModel
+          : (process.env.TRANSCRIPTION_MODEL ?? 'whisper-1'),
     },
     extraction: {
       configured: extraction,
-      model: extraction ? (process.env.AI_MODEL ?? 'gpt-4o-mini') : null,
+      model: !extraction
+        ? null
+        : gemini
+          ? geminiModel
+          : (process.env.AI_MODEL ?? 'gpt-4o-mini'),
     },
     calendar: {
       configured: calendar,
