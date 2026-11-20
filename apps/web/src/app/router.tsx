@@ -22,6 +22,7 @@ const SettingsPage = lazy(() => import('@/features/settings/settings-page').then
 const SystemStatusPage = lazy(() => import('@/features/system/system-status-page').then((m) => ({ default: m.SystemStatusPage })))
 const NotFoundPage = lazy(() => import('@/features/system/not-found-page').then((m) => ({ default: m.NotFoundPage })))
 const PlannedPage = lazy(() => import('@/features/system/planned-page').then((m) => ({ default: m.PlannedPage })))
+const CalendarPage = lazy(() => import('@/features/calendar/calendar-page').then((m) => ({ default: m.CalendarPage })))
 const CapturePage = lazy(() => import('@/features/meetings/capture-page').then((m) => ({ default: m.CapturePage })))
 const MeetingNotesPage = lazy(() => import('@/features/meetings/notes-page').then((m) => ({ default: m.MeetingNotesPage })))
 const RegistryHubPage = lazy(() => import('@/features/registry/registry-hub-page').then((m) => ({ default: m.RegistryHubPage })))
@@ -102,24 +103,8 @@ export const router = createRouter([
       { path: 'notes', element: <Lazy><MeetingNotesPage /></Lazy> },
       { path: 'transcripts', element: <Navigate to="/notes" replace /> },
 
-      {
-        path: 'calendar',
-        element: (
-          <Lazy>
-            <PlannedPage
-              title="Calendar"
-              milestone="Milestone 7"
-              description="Meeting and deadline synchronisation, beginning with ICS export."
-              capabilities={[
-                'ICS export, which works on every device without any account connection',
-                'Google Calendar synchronisation with credentials held on the server',
-                'Duplicate-safe event creation through an outbox with idempotency keys',
-                'Reminders for verified action items only',
-              ]}
-            />
-          </Lazy>
-        ),
-      },
+      { path: 'calendar', element: <Lazy><CalendarPage /></Lazy> },
+
       {
         path: 'verification',
         element: (

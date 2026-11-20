@@ -46,7 +46,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Tasks', to: '/tasks', icon: CheckSquare },
       { label: 'Daily Work', to: '/daily-work', icon: ClipboardList },
-      { label: 'Calendar', to: '/calendar', icon: CalendarDays, planned: true },
+      { label: 'Calendar', to: '/calendar', icon: CalendarDays },
     ],
   },
   {
