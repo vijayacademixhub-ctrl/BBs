@@ -1,243 +1,429 @@
-# AcademicOS
+# AcademicOS — user guide
 
-An academic operations platform for research and coursework teams: the
-Master Index as a set of editable registers, meeting capture that keeps the
-transcript and the data points but no audio, task and daily-work tracking,
-and a calendar that covers everything with a date on it.
+The Baseline Builders operations site: the Master Index as editable
+registers, meetings captured as transcripts and dated figures without
+keeping any audio, a calendar covering everything with a date on it, and
+task and daily-work tracking.
 
-**Current status: ready for a controlled evaluation deployment, pending
-approval.** Not ready for institutional records — see
-[docs/m3-deployment-readiness.md](docs/m3-deployment-readiness.md).
-The database schema, authentication, mandatory multi-factor authentication,
-Row Level Security, private storage and audit logging are built and tested
-against local PostgreSQL — 196 database tests. No Supabase project has been
-created, so the application still runs on local demonstration data and says
-so wherever it matters.
+**Live at <https://academicos-chi.vercel.app>**
+
+This file is the manual. Part I is how to use it, Part II is what is still
+outstanding, and Part III is for anyone changing the code.
 
 ---
 
-## Installation
+# Part I — Using the site
 
-Tested on Windows 11, macOS and Linux. Node.js 20 or later is required;
-Node 22 LTS is recommended.
+## 1. What it is, in one paragraph
 
-### 1. Install Node.js (Windows)
+The team's Master Index workbook has become a database that fifteen people
+can edit at once. Each sheet is now a *register*: Document Master Index,
+Work Allocation, Weekly Review, Source Map and Programme Structure, holding
+103 records between them. Everything is edited in place, every change is
+recorded with who made it and what it was before, and new columns or whole
+new registers can be added from the interface without anyone writing code.
+Around that sit the meeting, calendar and task modules.
 
-Download the LTS installer from <https://nodejs.org> and run it, accepting
-the defaults. Then open **Windows PowerShell** and confirm:
+## 2. Signing in
 
-```bash
-node --version
-```
+Open <https://academicos-chi.vercel.app>. Nothing is visible until you sign
+in — a visitor who has not signed in sees the sign-in page and no data.
 
-Any version from `v20` upward is fine.
+**Sign-in IDs look like `name@bbs.local`.** They are identifiers, not real
+mailboxes: nothing is ever emailed to them. Your ID and first password were
+issued separately.
 
-### 2. Get the code
+**First thing to do: change your password**, at **Settings → Password**. The
+password you were given was chosen by someone else and reached you through a
+message; until you replace it, whoever saw that message can sign in as you.
+It must be at least ten characters — length matters more than punctuation.
 
-```bash
-git clone https://github.com/vijayacademixhub-ctrl/BBs.git
-```
+**The Super Admin account also needs an authenticator app.** Only that
+account does; the other fourteen sign in with a password alone. The reason is
+narrow: the Super Admin can reach every team, change people's roles and read
+the audit trail. On first sign-in that account is shown a QR code to scan
+with Google Authenticator, Microsoft Authenticator or 1Password, and from
+then on it asks for a six-digit code at each sign-in.
 
-```bash
-cd BBs
-```
+> **If the Super Admin loses that phone there is no self-service way back.**
+> Supabase issues no backup codes. Set it up on a device you will keep, and
+> read §9.1 about enrolling a second administrator.
 
-### 3. Install dependencies
+**If a member forgets their password**, the Super Admin resets it in the
+Supabase dashboard — see §11.3. There is no "forgot password" link, because
+there is no mailbox to send a reset link to.
 
-Run this from the repository root, not from inside `apps/web`:
+## 3. The Master Index
+
+### 3.1 The hub
+
+**Master Index** in the sidebar opens the hub, not a table. This is
+deliberate: the workbook opened onto a wall of rows, which answered none of
+the questions people actually arrive with. The hub answers those instead.
+
+Across the top are the four figures that matter — total records, open items,
+records with information missing, and anything overdue. Below them is a card
+for each register showing its own counts, what is incomplete, and when it was
+last changed. At the bottom is **Recent changes**: every edit, with its
+before and after value.
+
+The search box above the cards searches **every column of every register at
+once**. Two characters are enough. This is the fastest way to answer "where
+is the thing about admissions" without knowing which register it is in.
+
+### 3.2 Opening and editing a register
+
+Click **Open and edit** on a card.
+
+**To change a value: click the cell, type, press Enter.** Escape abandons the
+change. In a paragraph field, Enter adds a line break and **Ctrl+Enter**
+saves. Each change saves on its own — there is no Save button to forget,
+because an index gets edited in passing, between meetings and on phones.
+
+Other things on that screen:
+
+- **The strip at the top** — records, open, incomplete, overdue for this
+  register.
+- **Search this register**, plus filters for status and owner, a toggle for
+  **Incomplete only**, and one for **Show archived**.
+- **Column headings sort.** Click once for ascending, again for descending,
+  a third time to clear. Empty cells always sort last, because a blank is an
+  absence rather than a value.
+- **The pencil on a row** opens the full record, including columns hidden
+  from the grid. This is also where a record is deleted permanently.
+- **The box icon archives a row.** Archived records leave the counts but are
+  not destroyed, and **Show archived** brings them back into view. Prefer
+  archiving to deleting.
+- **A warning triangle** on a row means something expected is missing — an
+  owner, a date, a format. Hover to see which.
+
+### 3.3 Adding columns, and adding registers
+
+**Columns** on any register opens the column manager. Give the new column a
+name and a type — short text, paragraph, choice, date, link, number or
+percentage — and it appears in the grid at once. A choice column takes its
+options as a comma-separated list.
+
+Two rules are enforced rather than left to care. A column that came from the
+workbook can be **hidden** from the grid but not deleted, because everyone
+depends on those. Deleting a column *you* added removes the column and keeps
+its values, so adding it back restores what people had written.
+
+**New register** on the hub creates a whole new table — an event calendar, a
+committee register, anything. It starts with a Title and a Notes column; add
+the rest as they are needed.
+
+### 3.4 The separate window
+
+**Separate window** opens one register in its own operating-system window,
+which can sit beside a meeting or on a second screen. It is a real window,
+not a tab and not a pop-up panel, and it has no sidebar: it exists to hold
+one register. Asking for the same register twice brings the existing window
+forward rather than opening a second editable copy of the same rows.
+
+### 3.5 Getting data out
+
+**Export** downloads the register as a CSV that opens in Excel with the
+accents and Kannada intact. Archived rows are included and marked, so an
+export is a complete picture rather than the current filter.
+
+## 4. Meetings, and capturing them by voice
+
+### 4.1 What is kept, and what is not
+
+**No audio is ever stored.** The microphone stream stays in your browser, is
+transcribed in forty-second segments, and each segment is discarded the
+moment its text comes back. There is no recording to download afterwards,
+because none exists. What is kept is the **note**: the transcript, the data
+points, the decisions and the actions.
+
+This is enforced in four places, not just promised: the audio never exists as
+one whole file; the server function that transcribes it writes nothing
+anywhere; the database column that would record retained audio cannot hold
+anything but "false"; and a test records real speech and then inspects what
+was stored to confirm no audio field exists.
+
+### 4.2 Capturing a meeting
+
+**Capture** in the sidebar. Choose the meeting, set the spoken language —
+**Mixed** handles English, Kannada and Hindi in one sentence and is the right
+default — and confirm that everyone present has been told. The microphone is
+requested only after that, never before.
+
+While recording you will see the elapsed time, how many segments have been
+transcribed, and the transcript appearing as it goes. **Pause** closes the
+current segment so nothing is held while paused. A silent stretch is noticed
+and not sent at all. **Stop and review** finishes and releases the
+microphone.
+
+### 4.3 Turning it into a note
+
+After stopping you can correct the transcript — speech recognition gets names
+wrong, and it is easier to fix now than later.
+
+**Propose data points** reads the transcript and pulls out the figures,
+decisions and actions, with the date each figure refers to. Given *"the
+response rate reached sixty two percent as of the eighteenth of November"* it
+produces `Response rate = 62%`, dated 2026-11-18, marked **as of**, with the
+sentence it came from quoted underneath.
+
+Everything a model proposes is marked **unverified** and carries a checkbox:
+*I have checked this against the transcript*. Nothing it produced is treated
+as fact until a person ticks that. It is instructed never to infer a number
+or a date that was not said, and to leave a field out rather than guess — a
+date inferred from "next month" would read as precision that is not there.
+
+You can also add data points by hand with **Add a data point**, setting the
+date and what the date means (as of, due, decided on, or an event date).
+
+**Save notes** writes it all to the database. **Notes** in the sidebar lists
+every note, searchable across transcripts and figures.
+
+### 4.4 Working without recording
+
+Recording is not required. **Write or paste a transcript instead** on the
+capture screen goes straight to the same review step, and data points can
+always be entered by hand. Use this for a meeting already held, or when
+recording is not appropriate.
+
+### 4.5 What to expect from the microphone
+
+Chrome, Edge and Firefox on a laptop work well. On an iPhone, Safari stops
+recording when the screen locks — keep the screen on, or use the paste route.
+If the browser refuses the microphone, the page says so plainly rather than
+pretending to record.
+
+## 5. Calendar
+
+**Calendar** gathers everything with a date: meetings, task due dates, and
+every dated row in every register. A due date sitting in Work Allocation used
+to be invisible until someone opened that register; now it appears beside
+everything else. Overdue items are listed first.
+
+**Export .ics** downloads the whole agenda as a calendar file that opens in
+Google Calendar, Outlook or Apple Calendar. This needs no setup and works
+today.
+
+**Block** writes a single entry to a shared Google Calendar. It is currently
+unavailable — see §10.1. When it is connected, pressing Block twice cannot
+create two entries: the event's identity is derived from the thing being
+blocked, so a repeat press or a retry after a dropped connection is refused
+by Google rather than duplicated.
+
+## 6. Tasks and daily work
+
+**Tasks** is personal and team work with status, priority, category, due date
+and assignee, filterable by any of them. Anyone can create a task; you can
+edit tasks assigned to you and tasks you created.
+
+**Daily Work** is the end-of-day entry: what was completed, what is in
+progress, what is pending, and the next day's plan. One entry per person per
+day — editing a day amends that entry rather than adding a second account of
+it. You can see your own entries and your colleagues'.
+
+## 7. Dashboard
+
+The first screen after signing in. It shows your own due, pending, overdue
+and recently completed counts; the Master Index figures with the registers
+that need attention; your upcoming meetings; your priority tasks; and recent
+daily work across the team. Every figure is a link to the screen it came
+from, and all of them are computed from the same records those screens show,
+so the two cannot disagree.
+
+## 8. Who can do what
+
+|  | Member (14 people) | Super Admin (you) |
+|---|---|---|
+| Sign in | Password alone | Password **and** authenticator app |
+| Master Index — read | Everything | Everything |
+| Master Index — edit records | Everything | Everything |
+| Add columns and registers | Yes | Yes |
+| Delete a register | No | Only ones not from the workbook |
+| Capture meetings and write notes | Meetings they attend | All |
+| **Create a meeting** | **No** | Yes |
+| Tasks | Create; edit own and created | All in the team |
+| Daily work | Own entry; read the team's | All |
+| Audit trail | No | Yes |
+| Accounts and roles | No | Yes |
+
+Everyone can edit every record in the index. That was a deliberate choice: an
+index only one person can correct goes stale. Every change is recorded with
+who made it and the previous value, so a mistake is traceable and reversible
+rather than prevented.
+
+Full detail in [docs/accounts-and-access.md](docs/accounts-and-access.md).
+
+---
+
+# Part II — What is pending
+
+## 9. Needs a decision from you
+
+**9.1 A second Super Admin.** You are the only one, and that account needs an
+authenticator app. A lost or wiped phone would leave nobody able to schedule
+meetings, add people or change roles. Promoting one trusted person to Super
+Admin removes that single point of failure.
+
+**9.2 Who can schedule meetings.** Only the Super Admin can. Members capture
+and write up meetings but cannot create one, so every new meeting waits on
+you. The **coordinator** role already exists for exactly this — it can
+schedule meetings and verify extractions without seeing the audit trail or
+touching accounts. Naming one or two coordinators would unblock the team.
+
+**9.3 Renaming the eleven placeholder accounts.** `member05` to `member15`
+are real working accounts with placeholder names. Renaming them is a Super
+Admin action in the Supabase dashboard; their records follow them.
+
+**9.4 Everyone changing their password.** Fifteen passwords were issued
+through a chat message. Until each person changes theirs at **Settings →
+Password**, anyone who read that message can sign in as them.
+
+**9.5 Rotating the Gemini key.** The key was pasted into a chat, so it should
+be regenerated in Google AI Studio and replaced in the Vercel environment.
+The site keeps working throughout; only the key changes.
+
+**9.6 Whether the site should stay publicly reachable.** The address is open
+to anyone who has it, and the sign-in page is what protects the data — which
+is the correct arrangement, and the workbook is no longer in the published
+JavaScript. If you would rather the address itself were restricted, Vercel's
+Deployment Protection can require a Vercel login as well, at the cost of
+every team member needing a Vercel account.
+
+## 10. Needs something from Google
+
+**10.1 Calendar blocking.** Not connected. An API key cannot do this: it
+identifies a project rather than a person, and Google accepts it only for
+reading public data. Writing an event needs a **service account** with the
+calendar shared to it, which is free. The steps are in
+[docs/calendar-setup.md](docs/calendar-setup.md) §3; once the credentials are
+in the Vercel environment, **Block** starts working with no code change.
+Until then, **Export .ics** does the same job manually.
+
+**10.2 Drive synchronisation.** Not built. The index stores Drive links and
+opens them, but nothing reads back from Drive, so "Last updated" is
+maintained by hand. The Drive API is free, and the same service account as
+the calendar could refresh file names, owners and modified dates
+automatically. This is the single change that would most reduce manual
+upkeep of the index.
+
+## 11. Not built yet
+
+**11.1 Verification Centre and Academic Assistant.** Listed in the sidebar
+and marked as such. The verification gate they depend on already exists in
+the database — AI-derived content cannot become a task or calendar event
+without human approval — but the review screen and the question-answering
+assistant are not written.
+
+**11.2 Reports.** Workload, completion trends and compliance reporting. The
+Master Index already shows load by owner inside Work Allocation, which covers
+part of it.
+
+**11.3 A Team screen.** Adding people, changing roles, suspending accounts
+and resetting passwords are all done in the Supabase dashboard today, not in
+the application. Procedures are in
+[docs/accounts-and-access.md](docs/accounts-and-access.md) §4. Suspend rather
+than delete: a suspended account reaches nothing, while their name stays
+attached to what they wrote.
+
+**11.4 Notifications.** The screen exists; nothing generates entries yet.
+
+## 12. Known limits, recorded honestly
+
+**12.1 Sign-up is closed by a dashboard setting, not by the schema.** The
+migration that refuses account creation without an invitation could not be
+installed, because the managed connection cannot write to Supabase's `auth`
+schema. **Check that Authentication → Sign In / Providers → "Allow new users
+to sign up" is off.** Someone signing up would reach no data — every policy
+requires a profile and a team membership, and they would have neither — but
+they would exist.
+
+**12.2 The production branch.** The site is deployed from
+`claude/exciting-davinci-brt4gr`, while the repository's default branch is
+still the older `claude/compassionate-hawking-mz27z6`. A push to the default
+branch could replace the live site with older code. Set the production branch
+in Vercel (**Settings → Git**), or merge the working branch into the default.
+
+**12.3 Dormant audio tables.** `recordings`, `transcripts` and the
+`meeting-recordings` storage bucket remain in the schema from the earlier
+design and are never written to. They were left rather than dropped because
+the access-control tests cover them in detail; removing them belongs in its
+own change. Anyone auditing the system should know they are there and that
+nothing fills them.
+
+**12.4 Retention is unset, on purpose.** No automatic deletion runs for any
+class of record. Each policy is marked pending approval, and a database
+constraint prevents one being switched on without a recorded approver — see
+[docs/retention-and-consent.md](docs/retention-and-consent.md).
+
+**12.5 One team.** Everything is scoped to Baseline Builders. The schema
+supports several teams and keeps them strictly apart, but only one exists.
+
+---
+
+# Part III — Running and changing the code
+
+## 13. For developers
+
+Node.js 20 or later. From the repository root:
 
 ```bash
 npm install
 ```
 
-### 4. Start the application
-
 ```bash
 npm run dev
 ```
 
-Open <http://localhost:5173>. The dashboard loads with demonstration data.
-
-To stop the server, press `Ctrl` + `C` in the terminal.
-
-### Environment configuration
-
-Milestone 1 requires no environment file. From Milestone 2 onward, copy
-`.env.example` to `.env` and fill in the values. `.env` is git-ignored and
-must never be committed.
-
----
-
-## Available commands
-
-Run all of these from the repository root.
+With no `VITE_SUPABASE_*` values set, the application runs with no backend:
+registers appear with their columns and no records, and it says so. With them
+set it uses real accounts and real rows.
 
 | Command | Purpose |
 |---|---|
-| `npm run dev` | Development server with hot reload on port 5173 |
+| `npm run dev` | Development server on port 5173 |
 | `npm run build` | Production build into `apps/web/dist` |
-| `npm run preview` | Serve the production build on port 4173 |
-| `npm test` | Unit tests (Vitest) |
-| `npm run typecheck` | TypeScript check, no emit |
-| `npm run verify:m1` | Browser verification of the Milestone 1 acceptance criteria |
+| `npm test` | Unit tests |
+| `npm run typecheck` | TypeScript, no emit |
+| `npm run test:db` | Database security suite — 221 tests against PostgreSQL |
 | `npm run verify:registry` | Browser verification of the Master Index — 30 checks |
 | `npm run verify:capture` | Browser verification of audio-free capture — 20 checks |
-| `npm run verify:live` | End-to-end against a real backend and a real key — 18 checks |
-| `npm run test:db` | Database security suite — 216 tests against PostgreSQL |
-| `npm run db:evaluate` | Local evaluation environment: two synthetic teams, access matrix |
-| `npm run verify:deployment` | Live verification against a real Supabase project |
-| `npm run test:all` | Frontend and database suites together |
-| `npm run db:reset` | Rebuild a local database from the migration files |
+| `npm run verify:live` | End to end against a real backend and key — 18 checks |
 
-`npm run verify:m1` and `npm run verify:m2` drive the real interface in a
-headless browser. Both require `npm run preview` running in another terminal,
-and Playwright with Chromium installed.
+The browser verifications need `npm run preview` running, and the capture
+ones need a microphone — on Linux, `xvfb-run -a npm run verify:capture`.
 
-`npm run test:db` requires a PostgreSQL instance. It builds the schema from
-the real migration files rather than a snapshot, so a passing run says
-something about what would actually be deployed. Set
-`ACADEMICOS_TEST_DATABASE_URL` if your instance is not at the default.
+## 14. Rules the code keeps
 
----
+1. **The browser never holds a secret.** Transcription, extraction and
+   calendar writes go through functions on the deployment that read their
+   keys from the server environment. A variable prefixed `VITE_` is published
+   in the bundle, so no secret may ever carry that prefix.
+2. **Authorisation is the database's job.** Row Level Security decides every
+   row. Deleting every role check in the interface would not reveal one extra
+   record.
+3. **Meeting audio is never stored**, and the database constraint says so as
+   well as the interface.
+4. **AI output is never an official record** until a person approves it,
+   enforced by a database trigger rather than by application code.
+5. **The team's real data never ships to the browser.** The workbook lives in
+   `api/_workbook`, read only by the server function that imports it.
 
-## Two modes
-
-With no backend configured, the application runs on local demonstration data
-and labels it as such on every screen. The login page says there is nothing
-to sign in to rather than redirecting past itself.
-
-With `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` set, it uses
-real authentication and real rows, and the demonstration labelling disappears.
-Nothing in between: the application never claims a session it does not have.
-
-## What works today
-
-**The Master Index.** The team's workbook as a set of registers — documents,
-work allocation, weekly review, source map, programme structure — each
-editable in place: click a cell, type, Enter. Columns and whole registers can
-be added from the interface, so recording something new costs no release. The
-hub opens on what needs attention rather than on the index itself, and one
-search box covers every column of every register. Any register opens in a
-separate operating-system window. See
-[docs/master-index.md](docs/master-index.md).
-
-**Meeting capture without audio.** The microphone stream is transcribed in
-forty-second segments and each is discarded as its text returns, so no
-recording of a meeting ever exists. What is kept is the note: transcript,
-data points, decisions, actions. Writing or pasting a transcript works with
-nothing configured; recording needs a transcription key on the deployment.
-See [docs/audio-free-capture.md](docs/audio-free-capture.md).
-
-**The calendar.** Meetings, task due dates and every dated row in every
-register, in one agenda. Export to `.ics` works anywhere with no credentials.
-Blocking time on a shared Google Calendar needs a service account — an API
-key cannot write to a calendar. See
-[docs/calendar-setup.md](docs/calendar-setup.md).
-
-**The rest.** Meeting scheduling and editing; task creation, assignment,
-filtering and status changes; daily work entries; notifications; dark mode;
-and a responsive layout for desktop, tablet and mobile.
-
-Without a backend configured, everything is held in the browser's local
-storage, is specific to one device, and can be reset from **System status**.
-
-### What is deliberately not working
-
-The verification centre and the academic assistant are not built. Their pages
-are reachable from the navigation and state plainly that they are not yet
-implemented. Nothing in the interface simulates a successful AI result, and
-anything a model proposes is marked unverified until a person confirms it.
-
----
-
-## Architecture
+## 15. Documents
 
 | Document | Contents |
 |---|---|
-| [docs/architecture.md](docs/architecture.md) | System design, modules, folder structure, navigation, API surface, security, deployment |
+| [docs/accounts-and-access.md](docs/accounts-and-access.md) | The fifteen accounts, roles, two-factor policy, adding and removing people |
+| [docs/master-index.md](docs/master-index.md) | The register model, editing, adding columns, the separate window |
+| [docs/audio-free-capture.md](docs/audio-free-capture.md) | Why no audio is kept, and what makes that true rather than claimed |
+| [docs/calendar-setup.md](docs/calendar-setup.md) | ICS today; the Google service account, and why an API key cannot work |
+| [docs/vercel-deployment.md](docs/vercel-deployment.md) | Deploying, environment variables, and who can see the result |
+| [docs/architecture.md](docs/architecture.md) | System design, modules, folder structure, security |
 | [docs/database-architecture.md](docs/database-architecture.md) | Entity relationships, key DDL, RLS policies, the AI approval gate |
-| [docs/implementation-plan.md](docs/implementation-plan.md) | Milestones M0–M8, timeline, cost, risks |
-| [docs/security-model.md](docs/security-model.md) | Who can access what, how it is enforced, what is verified and what is not |
-| [docs/security-hardening-report.md](docs/security-hardening-report.md) | Pre-deployment hardening: two defects found and fixed, what remains unmet |
-| [docs/mfa-setup.md](docs/mfa-setup.md) | Mandatory two-factor authentication, and what recovery does and does not exist |
-| [docs/backup-and-recovery.md](docs/backup-and-recovery.md) | Backup plan for all four data classes, restore procedures, responsibilities |
-| [docs/pre-deployment-checklist.md](docs/pre-deployment-checklist.md) | Ordered steps and owner decisions before anything is deployed |
-| [docs/m3-deployment-guide.md](docs/m3-deployment-guide.md) | Creating the Supabase project: ownership, region, plan, auth, storage, keys |
-| [docs/m3-migration-runbook.md](docs/m3-migration-runbook.md) | All 17 migrations: purpose, dependencies, validation query, rollback |
-| [docs/administrator-provisioning.md](docs/administrator-provisioning.md) | Creating the two Super Admin accounts securely |
-| [docs/m3-live-verification.md](docs/m3-live-verification.md) | What must pass before confidential data is entered |
-| [docs/m3-evaluation-plan.md](docs/m3-evaluation-plan.md) | How to evaluate the system, in three phases |
-| [docs/m3-deployment-readiness.md](docs/m3-deployment-readiness.md) | Readiness assessment, defects found, outstanding risks |
-| [docs/sample-data-test-plan.md](docs/sample-data-test-plan.md) | The synthetic dataset and what loading it found |
-| [docs/account-ownership-transfer.md](docs/account-ownership-transfer.md) | Personal ownership risks and the transfer procedure |
-| [docs/supabase-setup.md](docs/supabase-setup.md) | Project creation, region, keys, auth settings, deployment checks |
-| [docs/retention-and-consent.md](docs/retention-and-consent.md) | Both policies are unapproved; what exists and what you need to decide |
-| [docs/migration-and-backup.md](docs/migration-and-backup.md) | Local setup, migration procedure, rollback, backup and recovery |
-| [docs/milestone-1-report.md](docs/milestone-1-report.md) | Milestone 1: what was built and how it was verified |
-| [docs/milestone-2-report.md](docs/milestone-2-report.md) | Milestone 2: what was built, two defects the tests caught, what remains |
-| [docs/master-index.md](docs/master-index.md) | The register model, editing, adding columns and registers, the separate window |
-| [docs/audio-free-capture.md](docs/audio-free-capture.md) | Why no audio is kept, and the four things that make that true |
-| [docs/calendar-setup.md](docs/calendar-setup.md) | ICS today; what a Google service account needs, and why an API key cannot work |
-| [docs/accounts-and-access.md](docs/accounts-and-access.md) | The fifteen accounts, what each role can do, two-factor policy, adding and removing people |
-| [docs/vercel-deployment.md](docs/vercel-deployment.md) | Deploying this repository, its environment variables, and who can see the result |
-| [docs/reverse-engineering-analysis.md](docs/reverse-engineering-analysis.md) | Reference analysis — framework retained; no source materials were available |
+| [docs/security-model.md](docs/security-model.md) | Who can access what, how it is enforced, what is verified |
+| [docs/mfa-setup.md](docs/mfa-setup.md) | Two-factor authentication and what recovery exists |
+| [docs/retention-and-consent.md](docs/retention-and-consent.md) | Both policies are unapproved; what you need to decide |
+| [docs/backup-and-recovery.md](docs/backup-and-recovery.md) | Backup plan, restore procedures, responsibilities |
+| [docs/m3-migration-runbook.md](docs/m3-migration-runbook.md) | Every migration: purpose, dependencies, validation, rollback |
 
-### Stack
-
-React, Vite, TypeScript, Tailwind and shadcn-compatible components, deployed
-on Vercel with four serverless functions holding the keys the browser must
-not see; Supabase for PostgreSQL, authentication, storage and realtime.
-
-Transcription and extraction call any OpenAI-compatible endpoint, configured
-by environment variable, so the provider can change without a code change.
-
-### Governing design rules
-
-1. The browser never holds a key. Transcription, extraction and calendar
-   writes go through functions on the deployment, which read their
-   credentials from the server environment. A variable prefixed `VITE_` is
-   published in the bundle, so no secret may ever carry that prefix.
-2. AI output never becomes an official task or calendar event without human
-   approval, enforced by a database trigger rather than application code.
-3. Authorisation is enforced by Row Level Security. Frontend role checks are
-   presentation only.
-4. The AI assistant retrieves using the requesting user's credentials, so it
-   cannot surface meetings that user is not entitled to read.
-5. Sample and unverified AI content are always labelled as such.
-6. Meeting audio is never stored. It is transcribed in segments and
-   discarded; `meeting_notes.audio_retained` is constrained to false, so a
-   row claiming otherwise cannot exist.
-
-### Changing the visual design
-
-Every colour in the application resolves to a CSS custom property declared
-in `apps/web/src/styles/tokens.css`. No component contains a literal colour.
-To adopt a reference design, replace the values in that one file; the
-components do not change.
-
----
-
-## Security
-
-No API keys or secrets are committed to this repository. `.env` is
-git-ignored, and `.env.example` contains placeholder names only.
-
-Variables prefixed `VITE_` are embedded in the published browser bundle and
-must never hold a secret. The Supabase **publishable** key belongs there and
-is designed to be public; the **service-role** key bypasses Row Level
-Security entirely and belongs only in the AI service's server-side
-environment.
-
-Authorisation is enforced by PostgreSQL, not by the browser. Deleting every
-role check in the frontend would not give any user access to one additional
-row.
-
-Two-factor authentication is mandatory and is enforced the same way: a
-restrictive RLS policy on every table requires a verified second factor, so a
-password-only session can reach no confidential record whatever the interface
-allows. Supabase issues no backup codes, so recovery is administrator-assisted
-— read [docs/mfa-setup.md](docs/mfa-setup.md) §4 before the first account is
-created.
-
-See [docs/security-model.md](docs/security-model.md) and
-[docs/security-hardening-report.md](docs/security-hardening-report.md).
+Older milestone and planning documents remain in `docs/` and describe how the
+system reached this point.
