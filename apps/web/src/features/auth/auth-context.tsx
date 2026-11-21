@@ -77,26 +77,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * `getAuthenticatorAssuranceLevel()` reports what this session has reached
    * and what it could reach. A user with a verified factor who has not yet
    * answered the challenge has currentLevel aal1 and nextLevel aal2; a user
-   * with no factor at all has both at aal1 and must enrol.
+   * with no factor at all has both at aal1.
+   *
+   * Who is then *required* to enrol depends on the role, and must match
+   * migration 0020: Super Admin accounts need a second factor, member and
+   * coordinator accounts sign in with a password alone. Getting this wrong in
+   * either direction is visible — too strict and a member is parked on an
+   * enrolment screen they can never leave, which is exactly what happened
+   * before the role was consulted here.
+   *
+   * A member who has enrolled a factor anyway is still challenged for it:
+   * having set one up, being asked is what they expect.
    *
    * This is only the interface's view. It decides which screen to show, not
-   * what data is returned — the database refuses confidential rows to any
-   * aal1 session regardless of what this function concludes.
+   * what data is returned — the database decides that from the same rule.
    */
-  const resolveMfaStage = React.useCallback(async (): Promise<MfaStage> => {
-    if (!isSupabaseConfigured) return 'not_required'
-    const supabase = getSupabase()
-    const { data, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
-    if (aalError || !data) return 'unknown'
-    if (data.currentLevel === 'aal2') return 'verified'
-    return data.nextLevel === 'aal2' ? 'challenge' : 'enrol'
-  }, [])
+  const resolveMfaStage = React.useCallback(
+    async (role: AppRole | null): Promise<MfaStage> => {
+      if (!isSupabaseConfigured) return 'not_required'
+      const supabase = getSupabase()
+      const { data, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (aalError || !data) return 'unknown'
+      if (data.currentLevel === 'aal2') return 'verified'
+      if (data.nextLevel === 'aal2') return 'challenge'
+      return role === 'super_admin' ? 'enrol' : 'not_required'
+    },
+    [],
+  )
+
+  // Read inside callbacks that must not re-run when the role arrives.
+  const roleRef = React.useRef<AppRole | null>(null)
+  roleRef.current = profile?.role ?? null
 
   const refreshMfa = React.useCallback(async () => {
-    setMfaStage(await resolveMfaStage())
+    setMfaStage(await resolveMfaStage(roleRef.current))
   }, [resolveMfaStage])
 
-  const loadProfile = React.useCallback(async (userId: string) => {
+  const loadProfile = React.useCallback(async (userId: string): Promise<AppRole | null> => {
     const supabase = getSupabase()
 
     const { data: profileRow, error: profileError } = await supabase
@@ -108,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (profileError) {
       setError(profileError.message)
       setStatus('error')
-      return
+      return null
     }
 
     // A signed-in user with no readable profile has had their account removed
@@ -118,14 +135,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(null)
       setStatus('suspended')
       setError('This account has no active profile. Contact the Super Admin.')
-      return
+      return null
     }
 
     if (profileRow.status !== 'active') {
       setProfile(null)
       setStatus('suspended')
       setError('This account has been suspended.')
-      return
+      return null
     }
 
     const { data: membership } = await supabase
@@ -135,17 +152,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .limit(1)
       .maybeSingle()
 
+    const role = (membership?.role as AppRole) ?? 'member'
+
     setProfile({
       id: profileRow.id,
       email: profileRow.email,
       fullName: profileRow.full_name,
       designation: profileRow.designation ?? '',
       avatarUrl: profileRow.avatar_url ?? undefined,
-      role: (membership?.role as AppRole) ?? 'member',
+      role,
     })
     setTeamId(membership?.team_id ?? null)
     setStatus('signed_in')
     setError(null)
+    return role
   }, [])
 
   React.useEffect(() => {
@@ -162,9 +182,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(data.session)
       if (data.session?.user) {
         void loadProfile(data.session.user.id)
-        void resolveMfaStage().then((stage) => {
-          if (active) setMfaStage(stage)
-        })
+          .then((role) => resolveMfaStage(role))
+          .then((stage) => {
+            if (active) setMfaStage(stage)
+          })
       } else {
         setStatus('signed_out')
         setMfaStage('unknown')
@@ -184,11 +205,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-        void loadProfile(nextSession.user.id)
         // MFA_CHALLENGE_VERIFIED also arrives here on some versions; recomputing
         // on every session change keeps the stage honest without depending on
-        // which event name a given release emits.
-        void resolveMfaStage().then(setMfaStage)
+        // which event name a given release emits. The role has to be in hand
+        // first, because it decides whether enrolment is required at all.
+        void loadProfile(nextSession.user.id)
+          .then((role) => resolveMfaStage(role))
+          .then(setMfaStage)
       }
     })
 

@@ -183,7 +183,7 @@ export function MfaPage() {
           </CardTitle>
           <CardDescription>
             {phase === 'enrol'
-              ? 'AcademicOS holds confidential institutional records, so a second factor is required for every account.'
+              ? 'This account can reach every team, change roles and read the audit trail, so it needs a second factor. Member accounts sign in with a password alone.'
               : `Signed in as ${profile?.email ?? 'your account'}. Enter the six-digit code from your authenticator app.`}
           </CardDescription>
         </CardHeader>

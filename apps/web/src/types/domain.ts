@@ -74,6 +74,80 @@ export interface DailyWorkLog {
   createdAt: string
 }
 
+/**
+ * A single quantitative or factual point taken out of a meeting.
+ *
+ * Data points are the reason the meeting module exists: the audio is a means
+ * of getting to them and is not kept. A point carries the passage it came
+ * from so a reader can check it against the transcript rather than trusting
+ * the extraction.
+ */
+export type DataPointDateKind = 'as_of' | 'due' | 'decided_on' | 'event'
+
+export interface MeetingDataPoint {
+  id: string
+  label: string
+  value: string
+  unit?: string
+  /**
+   * The date this point refers to, where one was stated. A figure with no
+   * date reads as a current fact, and six weeks later nobody can tell whether
+   * it still is — so the date is carried with the figure rather than left to
+   * the meeting it came from.
+   */
+  date?: string
+  /** What the date means: the figure's as-of date, a deadline, the date a
+   *  decision was taken, or the date of an event. */
+  dateKind?: DataPointDateKind
+  /** The sentence in the transcript this came from. */
+  evidence?: string
+  /** Who or what produced it, and whether a person has checked it. */
+  origin: 'person' | 'ai'
+  verified: boolean
+}
+
+export const DATE_KIND_LABEL: Record<DataPointDateKind, string> = {
+  as_of: 'as of',
+  due: 'due',
+  decided_on: 'decided on',
+  event: 'on',
+}
+
+export type NoteSource = 'live_capture' | 'pasted_transcript' | 'manual'
+
+/**
+ * The record a meeting leaves behind.
+ *
+ * Audio is never part of it. A capture session holds the microphone stream in
+ * the browser only, sends it to the transcription endpoint, and discards it;
+ * what is stored is this note — the transcript text, the data points, the
+ * decisions and the actions.
+ */
+export interface MeetingNote {
+  id: string
+  meetingId: string
+  title: string
+  source: NoteSource
+  language: MeetingLanguage
+  /** Plain transcript text. Empty when the note was written by hand. */
+  transcript: string
+  /** Model that produced the transcript, when one did. */
+  transcriptModel?: string
+  summary?: string
+  dataPoints: MeetingDataPoint[]
+  decisions: string[]
+  actionItems: string[]
+  /** Minutes of audio processed. Recorded so the cost and length of a session
+   *  is auditable even though the audio itself is gone. */
+  capturedMinutes?: number
+  /** Always false, and stored so the claim is visible in the data and not
+   *  only in the interface. */
+  audioRetained: false
+  createdBy?: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface NotificationItem {
   id: string
   title: string

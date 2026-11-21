@@ -1,15 +1,20 @@
 import { Link } from 'react-router-dom'
-import { AlertTriangle, CalendarPlus, CheckCircle2, CircleDot, ListTodo } from 'lucide-react'
+import {
+  AlertTriangle, CalendarPlus, CheckCircle2, CircleDot, Database, FileWarning, Library, ListTodo,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/common/page-header'
 import { SampleDataNotice } from '@/components/common/provenance'
 import { ErrorState, LoadingCards, LoadingRows } from '@/components/common/states'
 import { useCurrentUser, useMeetings, useProfileMap, useTasks, useWorkLogs } from '@/hooks/use-data'
+import { useAllRegisterRecords, useRegisters } from '@/hooks/use-registry'
 import { formatLongDate } from '@/lib/format'
 import { StatCard } from './components/stat-card'
 import { PriorityTasks, ProcessingStatus, TeamActivity, UpcomingMeetings } from './components/widgets'
+import { RegistryAttention } from './components/registry-widget'
 import {
-  awaitingProcessing, computeCounts, priorityTasks, recentWorkLogs, tasksForUser, upcomingMeetings,
+  awaitingProcessing, computeCounts, priorityTasks, recentWorkLogs, registrySummary,
+  tasksForUser, upcomingMeetings,
 } from './selectors'
 
 export function DashboardPage() {
@@ -18,10 +23,13 @@ export function DashboardPage() {
   const workLogs = useWorkLogs()
   const profiles = useProfileMap()
   const { data: user } = useCurrentUser()
+  const registers = useRegisters()
+  const registerRecords = useAllRegisterRecords()
 
   const firstName = user?.fullName.split(' ')[0] ?? ''
   const myTasks = tasksForUser(tasks.data ?? [], user?.id ?? '')
   const counts = computeCounts(myTasks)
+  const registry = registrySummary(registers.data ?? [], registerRecords.data ?? [])
 
   return (
     <>
@@ -70,6 +78,51 @@ export function DashboardPage() {
         </section>
       )}
 
+      {registers.isPending || registerRecords.isPending ? (
+        <LoadingCards />
+      ) : registers.isError || registerRecords.isError ? (
+        <ErrorState
+          title="The Master Index could not be loaded"
+          onRetry={() => {
+            void registers.refetch()
+            void registerRecords.refetch()
+          }}
+        />
+      ) : (
+        <section className="space-y-2" aria-labelledby="master-index">
+          <h2
+            id="master-index"
+            className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >
+            Master Index
+          </h2>
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+            <StatCard
+              label="Records"
+              value={registry.records}
+              icon={Database}
+              to="/master-index"
+              hint={`${registry.entries.length} registers`}
+            />
+            <StatCard label="Open items" value={registry.open} icon={CircleDot} to="/master-index" />
+            <StatCard
+              label="Missing information"
+              value={registry.incomplete}
+              icon={FileWarning}
+              tone={registry.incomplete ? 'warning' : 'default'}
+              to="/master-index"
+            />
+            <StatCard
+              label="Index overdue"
+              value={registry.overdue}
+              icon={Library}
+              tone={registry.overdue ? 'destructive' : 'default'}
+              to="/master-index"
+            />
+          </div>
+        </section>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-2">
         {meetings.isPending ? (
           <LoadingRows rows={4} />
@@ -97,6 +150,14 @@ export function DashboardPage() {
           <TeamActivity logs={recentWorkLogs(workLogs.data)} profiles={profiles} />
         )}
 
+        {registers.isPending || registerRecords.isPending ? (
+          <LoadingRows rows={3} />
+        ) : (
+          <RegistryAttention entries={registry.entries} />
+        )}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
         {meetings.isPending ? (
           <LoadingRows rows={3} />
         ) : (

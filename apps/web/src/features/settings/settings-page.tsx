@@ -9,6 +9,7 @@ import { LoadingRows } from '@/components/common/states'
 import { useAuth } from '@/features/auth/auth-context'
 import { useTheme } from '@/hooks/use-theme'
 import { initialsOf } from '@/lib/format'
+import { ChangePassword } from './change-password'
 
 const ROLE_LABEL = {
   super_admin: 'Super Admin',
@@ -61,6 +62,8 @@ export function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      <ChangePassword />
 
       <Card>
         <CardHeader>

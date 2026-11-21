@@ -22,6 +22,12 @@ const SettingsPage = lazy(() => import('@/features/settings/settings-page').then
 const SystemStatusPage = lazy(() => import('@/features/system/system-status-page').then((m) => ({ default: m.SystemStatusPage })))
 const NotFoundPage = lazy(() => import('@/features/system/not-found-page').then((m) => ({ default: m.NotFoundPage })))
 const PlannedPage = lazy(() => import('@/features/system/planned-page').then((m) => ({ default: m.PlannedPage })))
+const CalendarPage = lazy(() => import('@/features/calendar/calendar-page').then((m) => ({ default: m.CalendarPage })))
+const CapturePage = lazy(() => import('@/features/meetings/capture-page').then((m) => ({ default: m.CapturePage })))
+const MeetingNotesPage = lazy(() => import('@/features/meetings/notes-page').then((m) => ({ default: m.MeetingNotesPage })))
+const RegistryHubPage = lazy(() => import('@/features/registry/registry-hub-page').then((m) => ({ default: m.RegistryHubPage })))
+const RegisterPage = lazy(() => import('@/features/registry/register-page').then((m) => ({ default: m.RegisterPage })))
+const RegisterWindowShell = lazy(() => import('@/features/registry/standalone-window').then((m) => ({ default: m.RegisterWindowShell })))
 
 function Lazy({ children }: { children: ReactNode }) {
   return <Suspense fallback={<LoadingRows rows={5} />}>{children}</Suspense>
@@ -45,6 +51,25 @@ const createRouter =
 
 export const router = createRouter([
   { path: '/login', element: <LoginPage /> },
+  /**
+   * A register in its own operating-system window.
+   *
+   * Outside the application shell on purpose — see
+   * features/registry/standalone-window.tsx. Still behind RequireAuth, so a
+   * pop-up URL is no way around signing in or around the second factor.
+   */
+  {
+    path: '/w/master-index',
+    element: (
+      <RequireAuth>
+        <Lazy><RegisterWindowShell /></Lazy>
+      </RequireAuth>
+    ),
+    children: [
+      { index: true, element: <Lazy><RegistryHubPage /></Lazy> },
+      { path: ':slug', element: <Lazy><RegisterPage standalone /></Lazy> },
+    ],
+  },
   // Outside the shell: a session at aal1 can reach no application data, so
   // rendering the navigation around this page would be misleading.
   { path: '/mfa', element: <MfaPage /> },
@@ -64,64 +89,22 @@ export const router = createRouter([
       { path: 'meetings/:id', element: <Lazy><MeetingDetailPage /></Lazy> },
       { path: 'meetings/:id/edit', element: <Lazy><MeetingFormPage mode="edit" /></Lazy> },
 
+      { path: 'master-index', element: <Lazy><RegistryHubPage /></Lazy> },
+      { path: 'master-index/:slug', element: <Lazy><RegisterPage /></Lazy> },
+
       { path: 'tasks', element: <Lazy><TasksPage /></Lazy> },
       { path: 'daily-work', element: <Lazy><DailyWorkPage /></Lazy> },
 
-      {
-        path: 'recorder',
-        element: (
-          <Lazy>
-            <PlannedPage
-              title="Meeting Recorder"
-              milestone="Milestone 3"
-              description="Browser microphone recording with an explicit consent step before any permission request."
-              capabilities={[
-                'Participant consent confirmation shown before the microphone is requested',
-                'Start, pause, resume and stop, with a visible recording indicator throughout',
-                'Honest permission handling — recording is never reported as active unless it is',
-                'Chunked, resumable upload so a long meeting does not fail at the final step',
-                'Clear guidance for iOS, where Safari stops recording when the screen locks',
-              ]}
-            />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'transcripts',
-        element: (
-          <Lazy>
-            <PlannedPage
-              title="Transcripts"
-              milestone="Milestone 4"
-              description="Automatic speech transcription for English, Kannada and Hindi, including mixed-language discussion."
-              capabilities={[
-                'Timestamped transcript segments linked to the source audio',
-                'Transcription model configurable so accuracy can be benchmarked before it is fixed',
-                'Transcript editing and export',
-                'Job status reported honestly, including when the processing service is offline',
-              ]}
-            />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'calendar',
-        element: (
-          <Lazy>
-            <PlannedPage
-              title="Calendar"
-              milestone="Milestone 7"
-              description="Meeting and deadline synchronisation, beginning with ICS export."
-              capabilities={[
-                'ICS export, which works on every device without any account connection',
-                'Google Calendar synchronisation with credentials held on the server',
-                'Duplicate-safe event creation through an outbox with idempotency keys',
-                'Reminders for verified action items only',
-              ]}
-            />
-          </Lazy>
-        ),
-      },
+      // Capture and notes are built. The audio path the earlier design
+      // planned is not: audio is never stored, so there is no recorder in the
+      // sense of something that produces a recording.
+      { path: 'capture', element: <Lazy><CapturePage /></Lazy> },
+      { path: 'recorder', element: <Navigate to="/capture" replace /> },
+      { path: 'notes', element: <Lazy><MeetingNotesPage /></Lazy> },
+      { path: 'transcripts', element: <Navigate to="/notes" replace /> },
+
+      { path: 'calendar', element: <Lazy><CalendarPage /></Lazy> },
+
       {
         path: 'verification',
         element: (
