@@ -110,8 +110,19 @@ function startServer() {
   const errs = [];
   page.on('pageerror', (e) => errs.push(e.message));
 
+  // A meeting has to exist for a note to attach to. The seeded demonstration
+  // meetings were removed, so the test makes its own rather than depending on
+  // data that is no longer there — which is exactly how it broke before.
+  await page.goto(`${base}/meetings/new`, { waitUntil: 'networkidle' });
+  await page.getByLabel('Title').fill('Capture verification meeting');
+  await page.getByLabel('Location').fill('Verification Room');
+  await page.getByRole('button', { name: /schedule meeting/i }).click();
+  await page.waitForTimeout(1200);
+  check('a meeting can be created to capture against',
+    !page.url().endsWith('/meetings/new'), page.url());
+
   await page.goto(`${base}/capture`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(900);
 
   check('capture page loads', (await page.getByRole('heading', { name: 'Meeting capture' }).count()) === 1);
   check('audio policy is stated on the page', (await page.getByText('No audio is kept.').count()) === 1);

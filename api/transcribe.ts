@@ -75,13 +75,21 @@ export async function POST(request: Request): Promise<Response> {
     )
   }
 
+  const url = new URL(request.url)
   const contentType = (request.headers.get('content-type') ?? 'audio/wav').split(';')[0]!.trim()
-  const language = new URL(request.url).searchParams.get('language') ?? 'mixed'
+  const language = url.searchParams.get('language') ?? 'mixed'
+
+  // Terms from the team's Dictionary register. Speech models get unfamiliar
+  // proper nouns wrong in predictable ways — "Karshima" came back as
+  // "Kashima" — and naming them beforehand is the one thing that reliably
+  // fixes it. Sent as a header rather than in the body, because the body is
+  // the audio.
+  const vocabulary = parseVocabulary(request.headers.get('x-vocabulary'))
 
   try {
     const result = geminiKey
-      ? await transcribeWithGemini(geminiKey, audio, contentType, language)
-      : await transcribeWithOpenAi(openAiKey!, audio, contentType, language)
+      ? await transcribeWithGemini(geminiKey, audio, contentType, language, vocabulary)
+      : await transcribeWithOpenAi(openAiKey!, audio, contentType, language, vocabulary)
 
     return json({ ...result, audioRetained: false, bytesProcessed: audio.byteLength })
   } catch (error) {
@@ -113,6 +121,7 @@ async function transcribeWithGemini(
   audio: ArrayBuffer,
   contentType: string,
   language: string,
+  vocabulary: string[],
 ): Promise<{ text: string; model: string }> {
   const model = process.env.GEMINI_TRANSCRIBE_MODEL ?? GEMINI_DEFAULT_MODEL
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`
@@ -120,6 +129,7 @@ async function transcribeWithGemini(
   const prompt =
     'Transcribe this audio exactly as spoken. ' +
     (LANGUAGE_HINT[language] ?? LANGUAGE_HINT.mixed) +
+    vocabularyHint(vocabulary) +
     ' Return only the transcript text: no speaker labels, no timestamps, no commentary, ' +
     'and no description of the recording. If there is no intelligible speech, return nothing at all.'
 
@@ -185,6 +195,7 @@ async function transcribeWithOpenAi(
   audio: ArrayBuffer,
   contentType: string,
   language: string,
+  vocabulary: string[],
 ): Promise<{ text: string; model: string }> {
   const model = process.env.TRANSCRIPTION_MODEL ?? OPENAI_DEFAULT_MODEL
 
@@ -197,6 +208,10 @@ async function transcribeWithOpenAi(
   // forcing a single language there makes the result worse, not better.
   if (language && language !== 'mixed' && language !== 'auto') {
     form.append('language', language)
+  }
+  // Whisper takes vocabulary as a free-text prompt rather than a list.
+  if (vocabulary.length > 0) {
+    form.append('prompt', `Names and terms that occur: ${vocabulary.join(', ')}.`)
   }
 
   const response = await fetch(process.env.TRANSCRIPTION_API_URL ?? OPENAI_DEFAULT_URL, {
@@ -216,6 +231,35 @@ async function transcribeWithOpenAi(
 
   const result = (await response.json()) as { text?: string }
   return { text: result.text ?? '', model }
+}
+
+/**
+ * The dictionary arrives as a header, so it is bounded hard: a header too
+ * long is rejected outright by some proxies, which would make transcription
+ * fail silently once the list grew.
+ */
+function parseVocabulary(raw: string | null): string[] {
+  if (!raw) return []
+  let decoded = raw
+  try {
+    decoded = decodeURIComponent(raw)
+  } catch {
+    // Not encoded, or malformed. Use it as it came rather than failing.
+  }
+  return decoded
+    .split('|')
+    .map((term) => term.trim())
+    .filter((term) => term.length > 0 && term.length <= 60)
+    .slice(0, 120)
+}
+
+function vocabularyHint(vocabulary: string[]): string {
+  if (vocabulary.length === 0) return ''
+  return (
+    ' These names and terms occur in this meeting and must be spelt exactly as given: ' +
+    `${vocabulary.join(', ')}.` +
+    ' Do not use them for anything that does not sound like them.'
+  )
 }
 
 /** Providers dispatch on the extension, so it has to match the container. */

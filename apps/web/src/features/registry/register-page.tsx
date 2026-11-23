@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
-  ArrowLeft, Columns3, Download, ExternalLink, Plus, Search, Users,
+  ArrowLeft, Columns3, Download, ExternalLink, FolderSync, Plus, Search, Users,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,8 @@ import { FieldManager } from './components/field-manager'
 import { RecordDialog } from './components/record-dialog'
 import { GridSummary, RecordGrid } from './components/record-grid'
 import { registerIcon } from './icons'
+import { useServiceStatus } from '@/hooks/use-service-status'
+import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client'
 import { canOpenWindow, openRegisterWindow } from './window'
 
 /**
@@ -214,6 +216,7 @@ function RegisterView({ register, standalone }: { register: Register; standalone
                 <ExternalLink /> Separate window
               </Button>
             ) : null}
+            {register.slug === 'documents' ? <DriveSyncButton /> : null}
             <Button variant="outline" onClick={() => setColumnsOpen(true)}>
               <Columns3 /> Columns
             </Button>
@@ -459,6 +462,69 @@ function RegisterView({ register, standalone }: { register: Register; standalone
         }}
       />
     </>
+  )
+}
+
+/**
+ * Refreshes the document index from Drive.
+ *
+ * Offered only on the document register, and only when the deployment has a
+ * service account — a button that always fails teaches people to ignore
+ * buttons. The work happens server-side; see api/drive-sync.ts for what it
+ * will and will not overwrite.
+ */
+function DriveSyncButton() {
+  const { toast } = useToast()
+  const { status } = useServiceStatus()
+  const [busy, setBusy] = useState(false)
+
+  if (!status.drive.configured || !isSupabaseConfigured) return null
+
+  return (
+    <Button
+      variant="outline"
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true)
+        try {
+          const { data } = await getSupabase().auth.getSession()
+          const token = data.session?.access_token
+          if (!token) throw new Error('Sign in again before synchronising.')
+
+          const response = await fetch('/api/drive-sync', {
+            method: 'POST',
+            headers: { authorization: `Bearer ${token}` },
+          })
+          const body = (await response.json()) as {
+            checked?: number
+            updated?: number
+            unreachable?: number
+            problems?: string[]
+            message?: string
+          }
+          if (!response.ok) throw new Error(body.message ?? 'The synchronisation failed.')
+
+          toast({
+            title: `${body.updated ?? 0} of ${body.checked ?? 0} documents updated from Drive`,
+            description: body.unreachable
+              ? `${body.unreachable} could not be opened — probably not shared with the service account.`
+              : undefined,
+            tone: body.unreachable ? 'info' : 'success',
+          })
+        } catch (error) {
+          toast({
+            title: 'Drive synchronisation failed',
+            description: error instanceof Error ? error.message : undefined,
+            tone: 'error',
+          })
+        } finally {
+          setBusy(false)
+        }
+      }}
+      title="Read the modified date, name and owner of each linked file from Google Drive"
+    >
+      <FolderSync /> {busy ? 'Syncing…' : 'Sync from Drive'}
+    </Button>
   )
 }
 

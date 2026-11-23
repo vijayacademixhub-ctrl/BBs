@@ -57,7 +57,14 @@ export const BUILT_IN_REGISTERS: Register[] = [
         options: ['Active', 'In Progress', 'Unconfirmed', 'Archived'],
       }),
       f('owner', 'Owner', 'text'),
-      f('lastUpdated', 'Last updated', 'date'),
+      f('lastUpdated', 'Last updated', 'date', {
+        help: 'Refreshed from Drive when synchronisation runs, otherwise set by hand.',
+      }),
+      f('driveName', 'Name in Drive', 'text', {
+        inGrid: false,
+        help: 'What the file is actually called in Drive. Written by synchronisation; a '
+          + 'difference from the Document column usually means one of them was renamed.',
+      }),
       f('remarks', 'Remarks', 'longtext', { inGrid: false }),
     ],
   },
@@ -169,6 +176,49 @@ export const BUILT_IN_REGISTERS: Register[] = [
       f('students', 'Students', 'number'),
     ],
   },
+  {
+    id: 'reg_vocabulary',
+    slug: 'vocabulary',
+    name: 'Dictionary',
+    description:
+      'Words the transcription keeps getting wrong — names, places, acronyms. Every term here is given to the model before it listens.',
+    group: 'Meetings',
+    icon: 'book',
+    titleFieldId: 'term',
+    builtIn: true,
+    createdAt: ts,
+    updatedAt: ts,
+    fields: [
+      f('term', 'Term', 'text', { help: 'Spelt exactly as it should appear in a transcript.' }),
+      f('kind', 'Kind', 'select', {
+        options: ['Person', 'Place', 'Acronym', 'Programme', 'Committee', 'Other'],
+      }),
+      f('soundsLike', 'Heard as', 'text', {
+        help: 'What the transcription produced instead, if you have seen it get it wrong.',
+      }),
+      f('notes', 'Notes', 'longtext', { inGrid: false }),
+    ],
+  },
+  {
+    id: 'reg_snippets',
+    slug: 'snippets',
+    name: 'Snippets',
+    description:
+      'Phrases the team writes often. Insert one into a note or a record instead of typing it again.',
+    group: 'Meetings',
+    icon: 'file',
+    titleFieldId: 'label',
+    builtIn: true,
+    createdAt: ts,
+    updatedAt: ts,
+    fields: [
+      f('label', 'Name', 'text'),
+      f('body', 'Text', 'longtext'),
+      f('context', 'Used for', 'select', {
+        options: ['Meeting notes', 'Tasks', 'Register remarks', 'Correspondence', 'Any'],
+      }),
+    ],
+  },
 ]
 
 /** Fields whose emptiness makes a record incomplete, by register slug. */
@@ -178,4 +228,6 @@ export const COMPLETENESS_FIELDS: Record<string, string[]> = {
   'weekly-review': ['done', 'progress'],
   'source-map': ['taskRef'],
   'programme-structure': ['courses', 'faculty', 'students'],
+  vocabulary: ['term', 'kind'],
+  snippets: ['label', 'body'],
 }

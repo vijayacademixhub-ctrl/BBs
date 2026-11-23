@@ -22,6 +22,7 @@ const SettingsPage = lazy(() => import('@/features/settings/settings-page').then
 const SystemStatusPage = lazy(() => import('@/features/system/system-status-page').then((m) => ({ default: m.SystemStatusPage })))
 const NotFoundPage = lazy(() => import('@/features/system/not-found-page').then((m) => ({ default: m.NotFoundPage })))
 const PlannedPage = lazy(() => import('@/features/system/planned-page').then((m) => ({ default: m.PlannedPage })))
+const InsightsPage = lazy(() => import('@/features/insights/insights-page').then((m) => ({ default: m.InsightsPage })))
 const CalendarPage = lazy(() => import('@/features/calendar/calendar-page').then((m) => ({ default: m.CalendarPage })))
 const CapturePage = lazy(() => import('@/features/meetings/capture-page').then((m) => ({ default: m.CapturePage })))
 const MeetingNotesPage = lazy(() => import('@/features/meetings/notes-page').then((m) => ({ default: m.MeetingNotesPage })))
@@ -104,6 +105,7 @@ export const router = createRouter([
       { path: 'transcripts', element: <Navigate to="/notes" replace /> },
 
       { path: 'calendar', element: <Lazy><CalendarPage /></Lazy> },
+      { path: 'insights', element: <Lazy><InsightsPage /></Lazy> },
 
       {
         path: 'verification',

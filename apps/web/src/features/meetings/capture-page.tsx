@@ -13,10 +13,11 @@ import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/states'
 import { useToast } from '@/components/common/toast'
 import { useCurrentUser, useMeetings } from '@/hooks/use-data'
-import { useCreateMeetingNote } from '@/hooks/use-registry'
+import { useCreateMeetingNote, useRegister, useRegisterRecords } from '@/hooks/use-registry'
 import { useServiceStatus } from '@/hooks/use-service-status'
 import {
-  extractFromTranscript, ServiceError, transcribeSegment,
+  applyTransform, extractFromTranscript, fetchTransforms, ServiceError, transcribeSegment,
+  type TransformOption,
 } from '@/lib/capture/service'
 import {
   formatElapsed, isCaptureSupported, SegmentedRecorder, SEGMENT_SECONDS,
@@ -72,6 +73,26 @@ export function CapturePage() {
   const [actionItems, setActionItems] = useState<string[]>([])
   const [extracting, setExtracting] = useState(false)
 
+  // The team's Dictionary, handed to the model before it listens. Without it
+  // the transcription spells unfamiliar names the way they sound.
+  const vocabularyRegister = useRegister('vocabulary')
+  const vocabularyRecords = useRegisterRecords(vocabularyRegister.data?.id)
+  const vocabulary = useMemo(
+    () =>
+      (vocabularyRecords.data ?? [])
+        .filter((record) => !record.archivedAt)
+        .map((record) => String(record.values.term ?? '').trim())
+        .filter(Boolean),
+    [vocabularyRecords.data],
+  )
+
+  const [transforms, setTransforms] = useState<TransformOption[]>([])
+  const [transforming, setTransforming] = useState<string | null>(null)
+
+  useEffect(() => {
+    void fetchTransforms().then(setTransforms)
+  }, [])
+
   const recorderRef = useRef<SegmentedRecorder | null>(null)
   const tickRef = useRef<number | null>(null)
 
@@ -93,7 +114,7 @@ export function CapturePage() {
     async ({ blob }: { blob: Blob }) => {
       setPendingSegments((n) => n + 1)
       try {
-        const result = await transcribeSegment(blob, language)
+        const result = await transcribeSegment(blob, language, vocabularyRef.current)
         if (result.text.trim()) {
           setTranscript((current) => (current ? `${current} ${result.text.trim()}` : result.text.trim()))
         }
@@ -121,6 +142,11 @@ export function CapturePage() {
     },
     [language],
   )
+
+  // Read through a ref: the handler is created once when recording starts and
+  // must not be rebuilt every time the dictionary query settles.
+  const vocabularyRef = useRef<string[]>([])
+  vocabularyRef.current = vocabulary
 
   const startRecording = async () => {
     setCaptureError(null)
@@ -210,6 +236,30 @@ export function CapturePage() {
       })
     } finally {
       setExtracting(false)
+    }
+  }
+
+  const runTransform = async (id: string) => {
+    if (!transcript.trim()) return
+    setTransforming(id)
+    try {
+      const rewritten = await applyTransform(transcript, id)
+      if (rewritten.trim()) {
+        setTranscript(rewritten.trim())
+        toast({
+          title: 'Transcript rewritten',
+          description: 'Check it before saving — the wording changed, nothing else should have.',
+          tone: 'info',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'The transcript was not rewritten',
+        description: error instanceof Error ? error.message : undefined,
+        tone: 'error',
+      })
+    } finally {
+      setTransforming(null)
     }
   }
 
@@ -371,6 +421,9 @@ export function CapturePage() {
               <p className="text-sm text-muted-foreground">
                 Transcribed by {status.transcription.model} in {SEGMENT_SECONDS}-second segments.
                 Each segment is discarded as soon as its text comes back.
+                {vocabulary.length > 0
+                  ? ` ${vocabulary.length} terms from the Dictionary are given to it first.`
+                  : ' Add names it mishears to the Dictionary register to improve it.'}
               </p>
             )}
           </CardContent>
@@ -459,6 +512,10 @@ export function CapturePage() {
           setActionItems={setActionItems}
           onExtract={() => void runExtraction()}
           extracting={extracting}
+          transforms={transforms}
+          transforming={transforming}
+          onTransform={(id) => void runTransform(id)}
+          vocabularyCount={vocabulary.length}
           extractionConfigured={status.extraction.configured}
           onSave={() => void save()}
           saving={createNote.isPending}
@@ -501,6 +558,10 @@ function ReviewPanel(props: {
   onExtract: () => void
   extracting: boolean
   extractionConfigured: boolean
+  transforms: TransformOption[]
+  transforming: string | null
+  onTransform: (id: string) => void
+  vocabularyCount: number
   onSave: () => void
   saving: boolean
   capturedMinutes: number
@@ -549,6 +610,29 @@ function ReviewPanel(props: {
               placeholder="Two or three sentences."
             />
           </div>
+
+          {props.transforms.length > 0 ? (
+            <div className="space-y-1.5">
+              <Label>Rewrite the transcript</Label>
+              <div className="flex flex-wrap gap-2">
+                {props.transforms.map((option) => (
+                  <Button
+                    key={option.id}
+                    variant="outline"
+                    size="sm"
+                    disabled={!props.transcript.trim() || Boolean(props.transforming)}
+                    onClick={() => props.onTransform(option.id)}
+                  >
+                    {props.transforming === option.id ? 'Rewriting…' : option.label}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Wording only. Figures, dates, names and decisions are left exactly as they were
+                said, and the previous version is kept until you leave this screen.
+              </p>
+            </div>
+          ) : null}
 
           <div className="flex flex-wrap gap-2">
             <Button

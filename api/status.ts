@@ -55,6 +55,9 @@ export async function GET(): Promise<Response> {
       configured: calendar,
       calendarId: calendar ? (process.env.GOOGLE_CALENDAR_ID ?? 'primary') : null,
     },
+    // The same service account covers both, so one credential pair decides
+    // whether either is available.
+    drive: { configured: calendar },
     // Stated here as well as in the interface and in the database constraint.
     // The same claim in three places, none of which can be edited without the
     // others becoming visibly inconsistent.

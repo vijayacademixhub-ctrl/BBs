@@ -47,10 +47,10 @@ then on it asks for a six-digit code at each sign-in.
 
 > **If the Super Admin loses that phone there is no self-service way back.**
 > Supabase issues no backup codes. Set it up on a device you will keep, and
-> read §9.1 about enrolling a second administrator.
+> read §10.1 about enrolling a second administrator.
 
 **If a member forgets their password**, the Super Admin resets it in the
-Supabase dashboard — see §11.3. There is no "forgot password" link, because
+Supabase dashboard — see §12.3. There is no "forgot password" link, because
 there is no mailbox to send a reset link to.
 
 ## 3. The Master Index
@@ -97,7 +97,22 @@ Other things on that screen:
 - **A warning triangle** on a row means something expected is missing — an
   owner, a date, a format. Hover to see which.
 
-### 3.3 Adding columns, and adding registers
+### 3.3 The Dictionary, and why it matters
+
+**Master Index → Dictionary** is a register like any other, holding the names
+and terms the transcription keeps getting wrong. Every term in it is given to
+the model *before* it listens to a meeting.
+
+This is the cheapest accuracy improvement available. In testing, *Karshima*
+came back as *Kashima*; with the term in the Dictionary it does not. Twenty
+terms are already there — the team's names, Lalbagh, CMS, OBE, TLEP, WOW,
+Area Chairs. **Add a row whenever you see a name transcribed wrongly**, and
+put what it produced in the **Heard as** column.
+
+**Snippets** beside it holds phrases the team writes often. It is a shared
+phrasebook at present: the text is there to copy, with no insert button yet.
+
+### 3.4 Adding columns, and adding registers
 
 **Columns** on any register opens the column manager. Give the new column a
 name and a type — short text, paragraph, choice, date, link, number or
@@ -113,7 +128,7 @@ its values, so adding it back restores what people had written.
 committee register, anything. It starts with a Title and a Notes column; add
 the rest as they are needed.
 
-### 3.4 The separate window
+### 3.5 The separate window
 
 **Separate window** opens one register in its own operating-system window,
 which can sit beside a meeting or on a second screen. It is a real window,
@@ -121,7 +136,7 @@ not a tab and not a pop-up panel, and it has no sidebar: it exists to hold
 one register. Asking for the same register twice brings the existing window
 forward rather than opening a second editable copy of the same rows.
 
-### 3.5 Getting data out
+### 3.6 Getting data out
 
 **Export** downloads the register as a CSV that opens in Excel with the
 accents and Kannada intact. Archived rows are included and marked, so an
@@ -176,6 +191,14 @@ date inferred from "next month" would read as precision that is not there.
 You can also add data points by hand with **Add a data point**, setting the
 date and what the date means (as of, due, decided on, or an event date).
 
+**Rewrite the transcript** offers five fixed rewrites — tidy the wording,
+format as minutes, condense to points, translate to English, make it formal.
+Each changes wording only: every one is instructed never to add, remove,
+round or reword a number, a date, a name or a decision, because a model that
+tidies 62% into 60% produces something that then reads as what was said.
+Check the result before saving; the previous version is kept until you leave
+the screen.
+
 **Save notes** writes it all to the database. **Notes** in the sidebar lists
 every note, searchable across transcripts and figures.
 
@@ -205,7 +228,7 @@ Google Calendar, Outlook or Apple Calendar. This needs no setup and works
 today.
 
 **Block** writes a single entry to a shared Google Calendar. It is currently
-unavailable — see §10.1. When it is connected, pressing Block twice cannot
+unavailable — see §11.1. When it is connected, pressing Block twice cannot
 create two entries: the event's identity is derived from the thing being
 blocked, so a repeat press or a retry after a dropped connection is refused
 by Google rather than duplicated.
@@ -221,7 +244,23 @@ progress, what is pending, and the next day's plan. One entry per person per
 day — editing a day amends that entry rather than adding a second account of
 it. You can see your own entries and your colleagues'.
 
-## 7. Dashboard
+## 7. Insights
+
+**Insights** reports what the team has produced: how much of the index has an
+owner, how many meetings left a written record, how many extracted figures
+carry a stated date, who is carrying the allocation, and who has been keeping
+the index up to date.
+
+One figure deserves attention — **how much has been checked**. Figures a
+model proposed are not facts until a person has confirmed them against the
+transcript, and this says what proportion still has not been.
+
+There is deliberately no word count, no speaking rate and no daily streak.
+Rewarding a daily entry creates a reason to file one on a day when nothing
+happened, and that entry is worth less than the silence it replaced. The
+reasoning is in [docs/wispr-flow-analysis.md](docs/wispr-flow-analysis.md).
+
+## 8. Dashboard
 
 The first screen after signing in. It shows your own due, pending, overdue
 and recently completed counts; the Master Index figures with the registers
@@ -230,7 +269,7 @@ daily work across the team. Every figure is a link to the screen it came
 from, and all of them are computed from the same records those screens show,
 so the two cannot disagree.
 
-## 8. Who can do what
+## 9. Who can do what
 
 |  | Member (14 people) | Super Admin (you) |
 |---|---|---|
@@ -257,41 +296,41 @@ Full detail in [docs/accounts-and-access.md](docs/accounts-and-access.md).
 
 # Part II — What is pending
 
-## 9. Needs a decision from you
+## 10. Needs a decision from you
 
-**9.1 A second Super Admin.** You are the only one, and that account needs an
+**10.1 A second Super Admin.** You are the only one, and that account needs an
 authenticator app. A lost or wiped phone would leave nobody able to schedule
 meetings, add people or change roles. Promoting one trusted person to Super
 Admin removes that single point of failure.
 
-**9.2 Who can schedule meetings.** Only the Super Admin can. Members capture
+**10.2 Who can schedule meetings.** Only the Super Admin can. Members capture
 and write up meetings but cannot create one, so every new meeting waits on
 you. The **coordinator** role already exists for exactly this — it can
 schedule meetings and verify extractions without seeing the audit trail or
 touching accounts. Naming one or two coordinators would unblock the team.
 
-**9.3 Renaming the eleven placeholder accounts.** `member05` to `member15`
+**10.3 Renaming the eleven placeholder accounts.** `member05` to `member15`
 are real working accounts with placeholder names. Renaming them is a Super
 Admin action in the Supabase dashboard; their records follow them.
 
-**9.4 Everyone changing their password.** Fifteen passwords were issued
+**10.4 Everyone changing their password.** Fifteen passwords were issued
 through a chat message. Until each person changes theirs at **Settings →
 Password**, anyone who read that message can sign in as them.
 
-**9.5 Rotating the Gemini key.** The key was pasted into a chat, so it should
+**10.5 Rotating the Gemini key.** The key was pasted into a chat, so it should
 be regenerated in Google AI Studio and replaced in the Vercel environment.
 The site keeps working throughout; only the key changes.
 
-**9.6 Whether the site should stay publicly reachable.** The address is open
+**10.6 Whether the site should stay publicly reachable.** The address is open
 to anyone who has it, and the sign-in page is what protects the data — which
 is the correct arrangement, and the workbook is no longer in the published
 JavaScript. If you would rather the address itself were restricted, Vercel's
 Deployment Protection can require a Vercel login as well, at the cost of
 every team member needing a Vercel account.
 
-## 10. Needs something from Google
+## 11. Needs something from Google
 
-**10.1 Calendar blocking.** Not connected. An API key cannot do this: it
+**11.1 Calendar blocking.** Not connected. An API key cannot do this: it
 identifies a project rather than a person, and Google accepts it only for
 reading public data. Writing an event needs a **service account** with the
 calendar shared to it, which is free. The steps are in
@@ -299,37 +338,46 @@ calendar shared to it, which is free. The steps are in
 in the Vercel environment, **Block** starts working with no code change.
 Until then, **Export .ics** does the same job manually.
 
-**10.2 Drive synchronisation.** Not built. The index stores Drive links and
-opens them, but nothing reads back from Drive, so "Last updated" is
-maintained by hand. The Drive API is free, and the same service account as
-the calendar could refresh file names, owners and modified dates
-automatically. This is the single change that would most reduce manual
-upkeep of the index.
+**11.2 Drive synchronisation.** Built, waiting on the same credentials.
+**Sync from Drive** appears on the Document Master Index once the service
+account exists, and refreshes the last-updated date, the file's current Drive
+name and a missing owner. It never changes your document names, statuses or
+remarks, and it reports any link it could not open.
 
-## 11. Not built yet
+**11.3 Signing in with a Jain University address.** Built, waiting on an
+OAuth client. The button appears on the sign-in page only once Google is
+enabled in Supabase, and it sits alongside the password form rather than
+replacing it. Each person's email also has to be changed from `@bbs.local`
+to their real address before it can match them.
 
-**11.1 Verification Centre and Academic Assistant.** Listed in the sidebar
+Every step for all three is in
+[docs/google-workspace-setup.md](docs/google-workspace-setup.md), with a
+nine-line summary at the end.
+
+## 12. Not built yet
+
+**12.1 Verification Centre and Academic Assistant.** Listed in the sidebar
 and marked as such. The verification gate they depend on already exists in
 the database — AI-derived content cannot become a task or calendar event
 without human approval — but the review screen and the question-answering
 assistant are not written.
 
-**11.2 Reports.** Workload, completion trends and compliance reporting. The
+**12.2 Reports.** Workload, completion trends and compliance reporting. The
 Master Index already shows load by owner inside Work Allocation, which covers
 part of it.
 
-**11.3 A Team screen.** Adding people, changing roles, suspending accounts
+**12.3 A Team screen.** Adding people, changing roles, suspending accounts
 and resetting passwords are all done in the Supabase dashboard today, not in
 the application. Procedures are in
 [docs/accounts-and-access.md](docs/accounts-and-access.md) §4. Suspend rather
 than delete: a suspended account reaches nothing, while their name stays
 attached to what they wrote.
 
-**11.4 Notifications.** The screen exists; nothing generates entries yet.
+**12.4 Notifications.** The screen exists; nothing generates entries yet.
 
-## 12. Known limits, recorded honestly
+## 13. Known limits, recorded honestly
 
-**12.1 Sign-up is closed by a dashboard setting, not by the schema.** The
+**13.1 Sign-up is closed by a dashboard setting, not by the schema.** The
 migration that refuses account creation without an invitation could not be
 installed, because the managed connection cannot write to Supabase's `auth`
 schema. **Check that Authentication → Sign In / Providers → "Allow new users
@@ -337,32 +385,32 @@ to sign up" is off.** Someone signing up would reach no data — every policy
 requires a profile and a team membership, and they would have neither — but
 they would exist.
 
-**12.2 The production branch.** The site is deployed from
+**13.2 The production branch.** The site is deployed from
 `claude/exciting-davinci-brt4gr`, while the repository's default branch is
 still the older `claude/compassionate-hawking-mz27z6`. A push to the default
 branch could replace the live site with older code. Set the production branch
 in Vercel (**Settings → Git**), or merge the working branch into the default.
 
-**12.3 Dormant audio tables.** `recordings`, `transcripts` and the
+**13.3 Dormant audio tables.** `recordings`, `transcripts` and the
 `meeting-recordings` storage bucket remain in the schema from the earlier
 design and are never written to. They were left rather than dropped because
 the access-control tests cover them in detail; removing them belongs in its
 own change. Anyone auditing the system should know they are there and that
 nothing fills them.
 
-**12.4 Retention is unset, on purpose.** No automatic deletion runs for any
+**13.4 Retention is unset, on purpose.** No automatic deletion runs for any
 class of record. Each policy is marked pending approval, and a database
 constraint prevents one being switched on without a recorded approver — see
 [docs/retention-and-consent.md](docs/retention-and-consent.md).
 
-**12.5 One team.** Everything is scoped to Baseline Builders. The schema
+**13.5 One team.** Everything is scoped to Baseline Builders. The schema
 supports several teams and keeps them strictly apart, but only one exists.
 
 ---
 
 # Part III — Running and changing the code
 
-## 13. For developers
+## 14. For developers
 
 Node.js 20 or later. From the repository root:
 
@@ -392,7 +440,7 @@ set it uses real accounts and real rows.
 The browser verifications need `npm run preview` running, and the capture
 ones need a microphone — on Linux, `xvfb-run -a npm run verify:capture`.
 
-## 14. Rules the code keeps
+## 15. Rules the code keeps
 
 1. **The browser never holds a secret.** Transcription, extraction and
    calendar writes go through functions on the deployment that read their
@@ -408,11 +456,13 @@ ones need a microphone — on Linux, `xvfb-run -a npm run verify:capture`.
 5. **The team's real data never ships to the browser.** The workbook lives in
    `api/_workbook`, read only by the server function that imports it.
 
-## 15. Documents
+## 16. Documents
 
 | Document | Contents |
 |---|---|
 | [docs/accounts-and-access.md](docs/accounts-and-access.md) | The fifteen accounts, roles, two-factor policy, adding and removing people |
+| [docs/google-workspace-setup.md](docs/google-workspace-setup.md) | Everything Google: the service account, the locked calendar, Drive sharing, Jain sign-in |
+| [docs/wispr-flow-analysis.md](docs/wispr-flow-analysis.md) | What was taken from Wispr Flow, what was declined, and why |
 | [docs/master-index.md](docs/master-index.md) | The register model, editing, adding columns, the separate window |
 | [docs/audio-free-capture.md](docs/audio-free-capture.md) | Why no audio is kept, and what makes that true rather than claimed |
 | [docs/calendar-setup.md](docs/calendar-setup.md) | ICS today; the Google service account, and why an API key cannot work |

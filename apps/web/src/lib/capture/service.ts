@@ -14,6 +14,8 @@ export interface ServiceStatus {
   transcription: { configured: boolean; model: string | null }
   extraction: { configured: boolean; model: string | null }
   calendar: { configured: boolean; calendarId: string | null }
+  /** Drive and calendar share one service account, so they arrive together. */
+  drive: { configured: boolean }
   audioRetention: 'never_stored'
 }
 
@@ -24,6 +26,7 @@ export const UNCONFIGURED: ServiceStatus = {
   transcription: { configured: false, model: null },
   extraction: { configured: false, model: null },
   calendar: { configured: false, calendarId: null },
+  drive: { configured: false },
   audioRetention: 'never_stored',
 }
 
@@ -76,6 +79,7 @@ export async function fetchServiceStatus(): Promise<ServiceStatus> {
         configured: Boolean(body.calendar?.configured),
         calendarId: body.calendar?.calendarId ?? null,
       },
+      drive: { configured: Boolean(body.drive?.configured) },
       audioRetention: 'never_stored',
     }
   } catch {
@@ -96,6 +100,7 @@ export async function fetchServiceStatus(): Promise<ServiceStatus> {
 export async function transcribeSegment(
   blob: Blob,
   language: MeetingLanguage,
+  vocabulary: string[] = [],
 ): Promise<{ text: string; model: string; skipped?: boolean }> {
   const wav = await toWav16kMono(blob)
 
@@ -105,9 +110,16 @@ export async function transcribeSegment(
     return { text: '', model: 'none', skipped: true }
   }
 
+  const headers: Record<string, string> = { 'content-type': 'audio/wav' }
+  if (vocabulary.length > 0) {
+    // Encoded because these are proper nouns in several scripts, and a raw
+    // header may carry only Latin-1.
+    headers['x-vocabulary'] = encodeURIComponent(vocabulary.slice(0, 120).join('|'))
+  }
+
   const response = await fetch(`/api/transcribe?language=${encodeURIComponent(language)}`, {
     method: 'POST',
-    headers: { 'content-type': 'audio/wav' },
+    headers,
     body: wav,
   })
   if (!response.ok) throw await failure(response)
@@ -144,4 +156,35 @@ export async function extractFromTranscript(transcript: string): Promise<Extract
     actionItems: Array.isArray(body.actionItems) ? body.actionItems : [],
     model: body.model ?? 'unknown',
   }
+}
+
+/* -------------------------------------------------------------- transforms */
+
+export interface TransformOption {
+  id: string
+  label: string
+}
+
+/** The transforms this deployment offers. Asked for rather than hard-coded,
+ *  so the list cannot drift from the one the endpoint will accept. */
+export async function fetchTransforms(): Promise<TransformOption[]> {
+  try {
+    const response = await fetch('/api/transform')
+    if (!response.ok) return []
+    const body = (await response.json()) as { transforms?: TransformOption[]; configured?: boolean }
+    return body.configured ? (body.transforms ?? []) : []
+  } catch {
+    return []
+  }
+}
+
+export async function applyTransform(text: string, transform: string): Promise<string> {
+  const response = await fetch('/api/transform', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ text, transform }),
+  })
+  if (!response.ok) throw await failure(response)
+  const body = (await response.json()) as { text?: string }
+  return body.text ?? ''
 }
