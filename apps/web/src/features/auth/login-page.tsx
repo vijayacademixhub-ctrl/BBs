@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { GraduationCap, Lock, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client'
+import { getSupabase, isProviderEnabled } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from './auth-context'
@@ -154,21 +154,10 @@ function GoogleSignIn() {
   const [failed, setFailed] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return
     let active = true
-    void (async () => {
-      try {
-        // Asking for the URL without redirecting is the cheapest way to find
-        // out whether the provider is enabled at all.
-        const { error } = await getSupabase().auth.signInWithOAuth({
-          provider: 'google',
-          options: { skipBrowserRedirect: true, redirectTo: `${window.location.origin}/dashboard` },
-        })
-        if (active) setAvailable(!error)
-      } catch {
-        if (active) setAvailable(false)
-      }
-    })()
+    void isProviderEnabled('google').then((enabled) => {
+      if (active) setAvailable(enabled)
+    })
     return () => {
       active = false
     }
