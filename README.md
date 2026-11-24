@@ -354,6 +354,12 @@ Every step for all three is in
 [docs/google-workspace-setup.md](docs/google-workspace-setup.md), with a
 nine-line summary at the end.
 
+**11.4 In what order.** The dashboard carries a **Finishing the setup** card
+that detects what is outstanding and drops each item as you deal with it.
+[docs/setup-walkthrough.md](docs/setup-walkthrough.md) is the companion to
+it: the same work arranged into five sittings, shortest and most exposed
+first, with what breaks if a step is skipped.
+
 ## 12. Not built yet
 
 **12.1 Verification Centre and Academic Assistant.** Listed in the sidebar
@@ -461,6 +467,7 @@ ones need a microphone — on Linux, `xvfb-run -a npm run verify:capture`.
 | Document | Contents |
 |---|---|
 | [docs/accounts-and-access.md](docs/accounts-and-access.md) | The fifteen accounts, roles, two-factor policy, adding and removing people |
+| [docs/setup-walkthrough.md](docs/setup-walkthrough.md) | The remaining setup in the order to do it, and the dashboard card that tracks it |
 | [docs/google-workspace-setup.md](docs/google-workspace-setup.md) | Everything Google: the service account, the locked calendar, Drive sharing, Jain sign-in |
 | [docs/wispr-flow-analysis.md](docs/wispr-flow-analysis.md) | What was taken from Wispr Flow, what was declined, and why |
 | [docs/master-index.md](docs/master-index.md) | The register model, editing, adding columns, the separate window |

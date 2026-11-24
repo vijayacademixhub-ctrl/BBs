@@ -226,7 +226,16 @@ export function SetupChecklist() {
               <ClipboardCheck className="size-4" /> Finishing the setup
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Checked against the live system each time this page loads, not ticked by hand.
+              Checked against the live system each time this page loads, not ticked by hand.{' '}
+              <a
+                className="underline underline-offset-2 hover:text-foreground"
+                href="https://github.com/vijayacademixhub-ctrl/BBs/blob/claude/exciting-davinci-brt4gr/docs/setup-walkthrough.md"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                How to do each of these
+              </a>
+              .
             </p>
           </div>
           <Badge variant={ordered.some((i) => i.urgent) ? 'warning' : 'outline'}>
