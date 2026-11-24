@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, Navigate, useLocation } from 'react-router-dom'
@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { GraduationCap, Lock, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { getSupabase, isProviderEnabled } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from './auth-context'
@@ -120,7 +121,9 @@ export function LoginPage() {
                 <Button type="button" variant="outline" className="w-full" asChild>
                   <Link to="/dashboard">Continue to the demonstration</Link>
                 </Button>
-              ) : null}
+              ) : (
+                <GoogleSignIn />
+              )}
             </form>
           </CardContent>
         </Card>
@@ -130,5 +133,82 @@ export function LoginPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+/**
+ * Sign in with a Jain University account.
+ *
+ * Offered beside the password form rather than replacing it: not everyone on
+ * the team necessarily has a working institutional address, and an account
+ * that cannot be reached is worse than two ways in.
+ *
+ * The button appears only once Google is actually configured as a provider.
+ * Supabase answers that question itself, so the interface does not have to
+ * be told separately and cannot drift from the truth — a sign-in button that
+ * leads to an error page is worse than no button.
+ */
+function GoogleSignIn() {
+  const [available, setAvailable] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    void isProviderEnabled('google').then((enabled) => {
+      if (active) setAvailable(enabled)
+    })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  if (!available) return null
+
+  return (
+    <>
+      <div className="flex items-center gap-3 py-1">
+        <span className="h-px flex-1 bg-border" />
+        <span className="text-xs text-muted-foreground">or</span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true)
+          setFailed(null)
+          const { error } = await getSupabase().auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: `${window.location.origin}/dashboard`,
+              // Picking an account matters here: most people are signed in to
+              // a personal Google account as well as the university one.
+              queryParams: { prompt: 'select_account' },
+            },
+          })
+          if (error) {
+            setFailed(error.message)
+            setBusy(false)
+          }
+        }}
+      >
+        {busy ? 'Opening Google…' : 'Sign in with your Jain University account'}
+      </Button>
+
+      {failed ? (
+        <p role="alert" className="text-sm text-destructive">
+          {failed}
+        </p>
+      ) : null}
+
+      <p className="text-xs text-muted-foreground">
+        Your account must already exist here. Signing in with Google identifies you; it does not
+        create an account.
+      </p>
+    </>
   )
 }

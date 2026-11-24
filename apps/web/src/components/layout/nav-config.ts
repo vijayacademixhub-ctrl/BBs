@@ -1,6 +1,6 @@
 import {
   BarChart3, Bell, CalendarDays, CheckSquare, ClipboardList, Cpu, LayoutDashboard,
-  Mic, MessageSquareText, ShieldCheck, Users, FileText, Settings,
+  Mic, MessageSquareText, ShieldCheck, Users, FileText, Settings, Library, LineChart,
 } from 'lucide-react'
 import type { AppRole } from '@/types/domain'
 
@@ -28,14 +28,18 @@ export interface NavGroup {
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Overview',
-    items: [{ label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard }],
+    items: [
+      { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+      { label: 'Master Index', to: '/master-index', icon: Library },
+      { label: 'Insights', to: '/insights', icon: LineChart },
+    ],
   },
   {
     label: 'Meetings',
     items: [
       { label: 'Meetings', to: '/meetings', icon: CalendarDays },
-      { label: 'Recorder', to: '/recorder', icon: Mic, planned: true },
-      { label: 'Transcripts', to: '/transcripts', icon: FileText, planned: true },
+      { label: 'Capture', to: '/capture', icon: Mic },
+      { label: 'Notes', to: '/notes', icon: FileText },
     ],
   },
   {
@@ -43,7 +47,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Tasks', to: '/tasks', icon: CheckSquare },
       { label: 'Daily Work', to: '/daily-work', icon: ClipboardList },
-      { label: 'Calendar', to: '/calendar', icon: CalendarDays, planned: true },
+      { label: 'Calendar', to: '/calendar', icon: CalendarDays },
     ],
   },
   {

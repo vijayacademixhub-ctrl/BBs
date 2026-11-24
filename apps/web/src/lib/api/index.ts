@@ -1,6 +1,8 @@
 import { isSupabaseConfigured } from '@/lib/supabase/client'
 import * as sample from './sample-repository'
 import * as supabase from './supabase-repository'
+import * as registrySample from './registry-sample'
+import * as registrySupabase from './registry-supabase'
 
 /**
  * The application's single data access point.
@@ -37,4 +39,45 @@ export const listNotifications = repository.listNotifications
 export const markNotificationRead = repository.markNotificationRead
 export const resetSampleData = repository.resetSampleData
 
-export type { MeetingInput, TaskInput, WorkLogInput } from './types'
+/**
+ * The register module, chosen the same way and for the same reason.
+ *
+ * Kept in its own pair of files because it is the one part of the data layer
+ * whose shape is itself data: a register carries its field list, so the
+ * mapping between jsonb values and the grid lives here rather than being
+ * spread across components.
+ */
+const registry = isSupabaseConfigured ? registrySupabase : registrySample
+
+export const listRegisters = registry.listRegisters
+export const createRegister = registry.createRegister
+export const updateRegister = registry.updateRegister
+export const deleteRegister = registry.deleteRegister
+export const addRegisterField = registry.addRegisterField
+export const updateRegisterField = registry.updateRegisterField
+export const removeRegisterField = registry.removeRegisterField
+export const listRegisterRecords = registry.listRegisterRecords
+export const createRegisterRecord = registry.createRegisterRecord
+export const updateRegisterRecord = registry.updateRegisterRecord
+export const setRecordArchived = registry.setRecordArchived
+export const deleteRegisterRecord = registry.deleteRegisterRecord
+export const listRegisterChanges = registry.listRegisterChanges
+
+export const listMeetingNotes = registry.listMeetingNotes
+export const createMeetingNote = registry.createMeetingNote
+export const updateMeetingNote = registry.updateMeetingNote
+export const deleteMeetingNote = registry.deleteMeetingNote
+
+/** Only meaningful with a backend: loads the workbook registers into it. */
+export const importWorkbookRegisters = isSupabaseConfigured
+  ? registrySupabase.importWorkbookRegisters
+  : async () => {
+      throw new Error(
+        'The workbook registers are already loaded locally. This import applies to a connected database.',
+      )
+    }
+
+export type {
+  MeetingInput, TaskInput, WorkLogInput,
+  RegisterInput, RegisterFieldInput, RegisterRecordInput, MeetingNoteInput,
+} from './types'
