@@ -12,6 +12,7 @@ import { formatLongDate } from '@/lib/format'
 import { StatCard } from './components/stat-card'
 import { PriorityTasks, ProcessingStatus, TeamActivity, UpcomingMeetings } from './components/widgets'
 import { RegistryAttention } from './components/registry-widget'
+import { SetupChecklist } from './components/setup-checklist'
 import {
   awaitingProcessing, computeCounts, priorityTasks, recentWorkLogs, registrySummary,
   tasksForUser, upcomingMeetings,
@@ -49,6 +50,8 @@ export function DashboardPage() {
       />
 
       <SampleDataNotice />
+
+      <SetupChecklist />
 
       {tasks.isPending ? (
         <LoadingCards />

@@ -38,8 +38,22 @@ export function ChangePassword() {
     if (!ready) return
     setBusy(true)
     try {
-      const { error } = await getSupabase().auth.updateUser({ password: next })
+      const supabase = getSupabase()
+      const { error } = await supabase.auth.updateUser({ password: next })
       if (error) throw new Error(error.message)
+
+      // Record that this account no longer uses the password it was issued.
+      // A timestamp only — never the password, and nothing derived from it.
+      // Failing to write it must not make a successful change look failed,
+      // so the result is deliberately not checked.
+      const { data } = await supabase.auth.getUser()
+      if (data.user) {
+        await supabase
+          .from('profiles')
+          .update({ password_set_at: new Date().toISOString() })
+          .eq('id', data.user.id)
+      }
+
       setNext('')
       setConfirm('')
       toast({
