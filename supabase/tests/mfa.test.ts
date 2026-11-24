@@ -40,7 +40,7 @@ describe('a Super Admin session that has not verified a second factor', () => {
   const confidential = [
     'meetings', 'recordings', 'transcripts', 'transcript_segments', 'ai_extractions',
     'tasks', 'daily_work_logs', 'documents', 'meeting_consents', 'notifications',
-    'team_members', 'teams', 'user_preferences', 'calendar_connections',
+    'teams', 'user_preferences', 'calendar_connections',
     'calendar_events', 'action_items', 'task_assignments', 'verification_records',
     'app_settings', 'retention_policies', 'mfa_reset_requests',
   ]
@@ -50,6 +50,42 @@ describe('a Super Admin session that has not verified a second factor', () => {
       (await db.query(`select * from public.${table}`)).rows,
     )
     expect(rows).toHaveLength(0)
+  })
+
+  // team_members is deliberately not in the list above. It is the one table
+  // an unverified Super Admin must be able to read, and only for themselves.
+  //
+  // Whether a second factor is required is decided by the person's role, and
+  // the role is stored here. Withholding this row told the application that a
+  // Super Admin was an ordinary member, so it never sent them to enrolment and
+  // showed them a dashboard on which every other query was then refused — an
+  // empty room rather than a locked door. An earlier version of this file
+  // asserted that behaviour, which is why it survived.
+  it('reads its own membership row, so the application can learn a factor is required', async () => {
+    const rows = await asUserAal1(db, 'superAdmin', async () =>
+      (await db.query('select profile_id, role from public.team_members')).rows,
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0].profile_id).toBe(IDS.superAdmin)
+    expect(rows[0].role).toBe('super_admin')
+  })
+
+  it('reads nobody else\'s membership row', async () => {
+    const rows = await asUserAal1(db, 'superAdmin', async () =>
+      (await db.query('select profile_id from public.team_members where profile_id <> $1', [
+        IDS.superAdmin,
+      ])).rows,
+    )
+    expect(rows).toHaveLength(0)
+  })
+
+  it('cannot change its own membership row before verifying', async () => {
+    const outcome = await asUserAal1Attempt(db, 'superAdmin', () =>
+      db.query(`update public.team_members set role = 'super_admin' where profile_id = $1`, [
+        IDS.superAdmin,
+      ]),
+    )
+    expect(denialReason(outcome)).toMatch(/row-level security/i)
   })
 
   it('reads nothing even as a Super Admin — the role does not substitute for the factor', async () => {
@@ -178,11 +214,22 @@ describe('the enrolment carve-out', () => {
     expect(denialReason(outcome)).toMatch(/row-level security|no rows affected/i)
   })
 
-  it('does not let it discover the team', async () => {
-    const rows = await asUserAal1(db, 'superAdmin', async () =>
+  // The carve-out does reveal one thing beyond the person's own profile: the
+  // id of the team they belong to, because it sits on the same row as the role
+  // the application has to read. That is accepted rather than overlooked. An
+  // id on its own opens nothing — every table keyed by it is still refused, as
+  // the block above asserts table by table — and the alternative was a Super
+  // Admin unable to learn that enrolment applied to them.
+  it('reveals its own team id and nothing hanging off it', async () => {
+    const [membership, teams, tasks] = await asUserAal1(db, 'superAdmin', async () => [
       (await db.query('select team_id from public.team_members')).rows,
-    )
-    expect(rows).toHaveLength(0)
+      (await db.query('select id from public.teams')).rows,
+      (await db.query('select id from public.tasks')).rows,
+    ])
+    expect(membership).toHaveLength(1)
+    expect(membership[0].team_id).toBe(IDS.team)
+    expect(teams).toHaveLength(0)
+    expect(tasks).toHaveLength(0)
   })
 })
 
